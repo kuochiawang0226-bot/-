@@ -420,6 +420,8 @@ def main():
             if ok:
                 state["last_push"] = today.isoformat()
                 state_p.write_text(json.dumps(state))
+            elif info.startswith("未設定"):
+                log("尚未設定 LINE 金鑰，略過推播；網站資料照常更新")
             else:
                 sys.exit(2)
     log("完成")
