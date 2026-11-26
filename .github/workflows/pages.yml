@@ -1,0 +1,41 @@
+# 網站發布：main 有新提交（程式或資料更新）就把 site/ 組好發布到 GitHub Pages。
+# 不抓任何資料、不需要任何密碼；資料由 daily／live 排程產生。
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "engine/build_site.py", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 啟用 Pages（若尚未啟用）
+        uses: actions/configure-pages@v5
+        continue-on-error: true
+        with:
+          enablement: true
+      - run: python -m engine.build_site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

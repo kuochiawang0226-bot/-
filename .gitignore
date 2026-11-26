@@ -1,0 +1,16 @@
+# 金鑰與個資：絕不進版控
+private/
+line_bot_config.json
+*.env
+.env*
+__pycache__/
+*.pyc
+.cache/
+# 未加密的個資輸出（只在本機產生）
+site/data/private.json
+site/data/line_preview.json
+_site/
+site/_preview.html
+run.log
+line_out.txt
+site/data/live_private.json
