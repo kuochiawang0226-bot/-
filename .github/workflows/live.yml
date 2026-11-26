@@ -35,5 +35,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+  deploy:
+    needs: quotes
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    environment:
+      name: github-pages
+    steps:
       - uses: actions/deploy-pages@v4
-        continue-on-error: true

@@ -1,5 +1,6 @@
 # 網站發布：main 有新提交（程式或資料更新）就把 site/ 組好發布到 GitHub Pages。
 # 不抓任何資料、不需要任何密碼；資料由 daily／live 排程產生。
+# 依 GitHub 官方範本分成「組網站」與「發布」兩個工作，避免發布時找不到剛上傳的網站檔。
 name: pages
 
 on:
@@ -18,24 +19,24 @@ concurrency:
   cancel-in-progress: false   # 依序發布，最新版本一定會上線
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: 啟用 Pages（若尚未啟用）
-        uses: actions/configure-pages@v5
-        continue-on-error: true
-        with:
-          enablement: true
       - run: python -m engine.build_site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v4
