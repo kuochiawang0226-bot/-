@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false   # 依序發布，最新版本一定會上線
 
 jobs:
   deploy:
