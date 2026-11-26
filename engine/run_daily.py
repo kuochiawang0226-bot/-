@@ -397,10 +397,12 @@ def main():
     rep, pf, hold = build(now)
     write(rep, pf, hold)
     full = dict(rep, portfolio=pf)
-    msgs = line.build(full, os.environ.get("SITE_URL"))
-    (ROOT / "site" / "data" / "line_preview.json").write_text(
-        json.dumps(msgs if not os.environ.get("STOCK_PASSWORD") else [m for i, m in enumerate(msgs) if i != 2],
-                   ensure_ascii=False, indent=1), encoding="utf-8")
+    url = os.environ.get("SITE_URL") or "https://kuochiawang0226-bot.github.io/-/"
+    msgs = line.build(full, url)
+    # 網站上的預覽：有密碼（公開網站）時不放持股內容
+    preview = line.build(full, url, include_holdings=not os.environ.get("STOCK_PASSWORD"))
+    (ROOT / "site" / "data" / "line_preview.json").write_text(json.dumps(preview, ensure_ascii=False, indent=1),
+                                                             encoding="utf-8")
     if a.dry_run:
         for m in msgs:
             print(m["text"], "\n" + "─" * 30)
