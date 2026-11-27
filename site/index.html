@@ -920,7 +920,7 @@ const GLOSS = {
   "VIX": ["VIX 恐慌指數", "美股市場的恐慌程度。>25 偏恐慌、>30 很恐慌，常伴隨大跌。", ""],
   "費城半導體": ["費城半導體指數（費半）", "美國半導體股的指數，跟台積電等台灣電子股連動很高。", ""],
   "ADR": ["台積電 ADR", "台積電在美國掛牌交易的股票，晚上的漲跌常預告隔天台積電的方向。", ""],
-  "更新時間": ["資料更新時間", "分兩層：①盤後分析（法人、選股、評分、財報、大戶）每個交易日由雲端排程自動算，一天只會變一次。②盤中報價與當沖判斷：在「設定」填了富果金鑰，打開網站就直接抓即時成交、每 30 秒自動更新；沒填則用雲端排程的報價（約晚 20 分鐘）。", "下單前仍請以券商 App 報價為準。"],
+  "更新時間": ["資料更新時間", "分兩層：①盤後分析（法人、選股、評分、財報、大戶）每個交易日早上 08:00 由雲端排程算好（用前一天收盤後的完整資料），一天只會變一次。②盤中報價與當沖判斷：在「設定」填了富果金鑰，打開網站就直接抓即時成交、每 30 秒自動更新；沒填則用雲端排程的報價（約晚 20 分鐘）。", "下單前仍請以券商 App 報價為準。"],
 };
 const GLOSS_ALIAS = {"跌破月線": "月線", "距月線": "月線", "跌破季線": "季線", "距季線": "季線", "季線(50MA)": "季線", "站上年線": "年線", "距 5MA": "5MA", "乖離MA5": "乖離", "乖離月線": "乖離", "乖離 MA5": "乖離",
   "廣度": "漲跌家數", "跌÷漲": "漲跌家數", "外資期貨淨部位": "外資期貨", "台指夜盤": "夜盤", "三大法人": "法人", "法人買超": "法人", "融資增減": "融資", "借券賣出": "借券", "當沖占比": "當沖比", "當沖即時": "當沖",
@@ -1025,12 +1025,11 @@ function nextUpdate() {
   const n = new Date(Date.now() + (new Date().getTimezoneOffset() + 480) * 60000), d = n.getDay(), hm = n.getHours() * 60 + n.getMinutes();
   const fmt2 = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
   if (d >= 1 && d <= 5) {
-    if (hm < 440) return "今天 07:20";
+    if (hm < 480) return "今天 08:00";
     if (hm >= 540 && hm < 810) return rtKey() ? "即時（每 30 秒）" : "約 " + fmt2(Math.ceil((hm + 1) / 5) * 5) + "（盤中每 5 分鐘）";
     if (hm < 540) return "09:00 開盤後";
-    if (hm < 1060) return "今天 17:40";
   }
-  return d === 5 || d === 6 ? "週一 07:20" : "明天 07:20";
+  return d === 5 || d === 6 ? "週一 08:00" : "明天 08:00";
 }
 
 /* ───────── 市場溫度計 ───────── */
@@ -1111,7 +1110,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", onTheme)
 function renderTop() {
   const r = S.rep, g = r.market.regime;
   const md = s => { const [, m, d] = s.split("-"); return `${+m}/${+d}`; };
-  $("#basis").innerHTML = `資料基準 ${md(r.basis)} 收盤｜<span class="updinfo"><span class="term" data-term="更新時間" role="button" tabindex="0">更新時間</span><span class="updsched">：盤後 07:20／17:40、盤中${rtKey() ? "即時" : "每 5 分"}</span></span>｜下次 ${esc(nextUpdate())}`;
+  $("#basis").innerHTML = `資料基準 ${md(r.basis)} 收盤｜<span class="updinfo"><span class="term" data-term="更新時間" role="button" tabindex="0">更新時間</span><span class="updsched">：每日 08:00、盤中${rtKey() ? "即時" : "每 5 分"}</span></span>｜下次 ${esc(nextUpdate())}`;
   renderPillSum();
   const lv = g.level.key === "green" ? "ok" : g.level.key === "yellow" ? "mid" : "bad";
   const lt = g.longterm.key === "normal" ? "ok" : g.longterm.key === "cautious" ? "mid" : "bad";

@@ -1,12 +1,11 @@
 # 每日資料：抓官方資料 → 選股與風控 → 更新網站資料 → 發布網站
-# 台灣時間 07:20（開盤前）與 17:40（收盤資料齊全後）各跑一次。
+# 台灣時間每個交易日早上 08:00 跑一次（cron-job.org 準時觸發；下面的 GitHub 排程只是備援，可能延遲）。
 # 小檔案（報告、總表、記分）存回 main；上千個個股詳細檔推到 data 分支（只保留最新一版，存放庫不會越來越肥）。
 name: daily
 
 on:
   schedule:
-    - cron: "20 23 * * 0-4"   # 台灣 週一~五 07:20
-    - cron: "40 9 * * 1-5"    # 台灣 週一~五 17:40
+    - cron: "10 0 * * 1-5"    # 備援：台灣 週一~五 08:10
   workflow_dispatch:
 
 permissions:
@@ -41,8 +40,8 @@ jobs:
         run: python -m engine.run_daily
       - name: 盤中報價與新聞初始化
         run: python -m engine.run_live || true
-      - name: 出場規則回測（傍晚那次才跑）
-        run: if [ "$(date +%H)" -ge 15 ]; then timeout 900 python -m engine.exit_study || true; fi
+      - name: 出場規則回測
+        run: timeout 900 python -m engine.exit_study || true
       - name: 存回 main（小檔案）
         run: |
           git config user.name "stock-bot"
