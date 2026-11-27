@@ -26,6 +26,8 @@ def avg_volumes(codes: list[str]) -> dict:
     out = {}
     for c in codes:
         p = SITE / "stock" / f"{c}.json"
+        if not p.exists():
+            p = ROOT / "databranch" / "stock" / f"{c}.json"
         if p.exists():
             bars = json.loads(p.read_text(encoding="utf-8")).get("bars") or []
             vs = [b[5] for b in bars[-5:] if b[5]]
@@ -92,8 +94,17 @@ def main():
         (SITE / "live_private.enc.json").write_text(json.dumps(encrypt({"quotes": private_q}, pw)), encoding="utf-8")
     else:  # 本機／預覽模式：明文檔已列入 .gitignore，不會上傳
         (SITE / "live_private.json").write_text(json.dumps({"quotes": private_q}, ensure_ascii=False), encoding="utf-8")
+    # 新聞每次一起更新（盤中約 5 分鐘一次）
+    news = []
+    if not a.asof and stocks_p.exists():
+        try:
+            name_map = {r["n"].replace("*", "").replace("-KY", ""): r["c"] for r in table
+                        if len(r["n"]) >= 2 and r["m"] in ("市", "櫃") and not r.get("e")}
+            news = src.news(name_map=name_map)[:120]
+        except Exception as e:  # noqa: BLE001
+            print("新聞更新失敗：", e, file=sys.stderr)
     (SITE / "live.json").write_text(json.dumps({"updated": now.isoformat(timespec="minutes"), "quotes": q, "index": idx,
-                                                "daytrade": mon}, ensure_ascii=False), encoding="utf-8")
+                                                "daytrade": mon, "news": news}, ensure_ascii=False), encoding="utf-8")
     if mon:
         c = mon["counts"]
         print(f"當沖即時（{mon['updated'][11:16]}）：可進 {c['go']}、觀察 {c['watch']}、不適合 {c['no']}")

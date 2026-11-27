@@ -37,8 +37,10 @@ def main():
     for f in (SRC / "data").glob("*.json"):
         if f.name not in SKIP:
             shutil.copy2(f, OUT / "data" / f.name)
-    if (SRC / "data" / "stock").exists():
-        shutil.copytree(SRC / "data" / "stock", OUT / "data" / "stock")
+    # 個股詳細檔：本機剛產生的優先，否則用 data 分支（排程會把它取到 databranch/）
+    stock_dir = SRC / "data" / "stock" if (SRC / "data" / "stock").exists() else ROOT / "databranch" / "stock"
+    if stock_dir.exists():
+        shutil.copytree(stock_dir, OUT / "data" / "stock")
     if (SRC / "icons").exists():
         shutil.copytree(SRC / "icons", OUT / "icons")
     if (SRC / "manifest.webmanifest").exists():

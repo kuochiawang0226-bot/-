@@ -23,6 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: 取得個股詳細檔（data 分支）
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: data
+          path: databranch
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

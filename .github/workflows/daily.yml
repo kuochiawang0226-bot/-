@@ -1,5 +1,6 @@
-# 每日晨報：抓資料 → 選股與風控 → 更新網站資料 → 推 LINE
-# 早上 07:20（台灣）跑一次並推 LINE；下午 17:40 收盤資料齊了再跑一次（只更新網站，不推）。
+# 每日資料：抓官方資料 → 選股與風控 → 更新網站資料 → 發布網站
+# 台灣時間 07:20（開盤前）與 17:40（收盤資料齊全後）各跑一次。
+# 小檔案（報告、總表、記分）存回 main；上千個個股詳細檔推到 data 分支（只保留最新一版，存放庫不會越來越肥）。
 name: daily
 
 on:
@@ -7,10 +8,6 @@ on:
     - cron: "20 23 * * 0-4"   # 台灣 週一~五 07:20
     - cron: "40 9 * * 1-5"    # 台灣 週一~五 17:40
   workflow_dispatch:
-    inputs:
-      push_line:
-        description: "要推播 LINE 嗎？(true/false)"
-        default: "false"
 
 permissions:
   contents: write
@@ -24,13 +21,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
     env:
       TZ: Asia/Taipei
       STOCK_PASSWORD: ${{ secrets.STOCK_PASSWORD }}
-      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-      LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
-      SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,24 +37,28 @@ jobs:
           path: .cache
           key: twse-${{ github.run_id }}
           restore-keys: twse-
-      - name: 產生晨報
-        run: |
-          if [ "${{ github.event.schedule }}" = "20 23 * * 0-4" ] || [ "${{ inputs.push_line }}" = "true" ]; then
-            python -m engine.run_daily --push
-          else
-            python -m engine.run_daily
-          fi
-      - name: 盤中報價初始化
+      - name: 產生每日資料
+        run: python -m engine.run_daily
+      - name: 盤中報價與新聞初始化
         run: python -m engine.run_live || true
-      - name: 存回存放庫
+      - name: 存回 main（小檔案）
         run: |
           git config user.name "stock-bot"
           git config user.email "stock-bot@users.noreply.github.com"
-          git add -A site/data/stock site/data/report.json site/data/stocks.json site/data/live.json data/scorecard data/daily data/line_state.json 2>/dev/null || true
+          git add site/data/report.json site/data/stocks.json site/data/live.json data/scorecard data/daily 2>/dev/null || true
           git add site/data/private.enc.json site/data/live_private.enc.json 2>/dev/null || true
-          git diff --cached --quiet || git commit -m "晨報資料 $(date +%F_%H%M)"
+          git diff --cached --quiet || git commit -m "每日資料 $(date +%F_%H%M)"
           git pull --rebase -X ours || true
           git push
+      - name: 個股詳細檔推到 data 分支（只留最新一版）
+        run: |
+          rm -rf /tmp/databr && mkdir -p /tmp/databr/stock
+          cp -r site/data/stock/. /tmp/databr/stock/
+          cd /tmp/databr
+          git init -q -b data
+          git -c user.name=stock-bot -c user.email=stock-bot@users.noreply.github.com add -A
+          git -c user.name=stock-bot -c user.email=stock-bot@users.noreply.github.com commit -qm "個股詳細資料 $(date +%F_%H%M)"
+          git push -f -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
       - name: 組網站
         run: python -m engine.build_site
       - uses: actions/upload-pages-artifact@v3
@@ -70,7 +68,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    continue-on-error: true   # 還沒開 GitHub Pages 時不算失敗
+    continue-on-error: true
     environment:
       name: github-pages
     steps:

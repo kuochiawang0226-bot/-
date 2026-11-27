@@ -112,6 +112,10 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
   nav.tabs a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .topbar{padding:12px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
   .tb1 h1{font-size:1.2rem}
+  .tb1{flex-wrap:nowrap;gap:8px}
+  .tb1>div{flex:1;min-width:0}
+  .tb1 .spacer{display:none}
+  .livedot{font-size:.68rem;white-space:nowrap}
   .tb1 .mark.sm{display:grid}
   .topbar .themebtn{display:inline-flex;padding:5px 8px}
   .topbar .themebtn span{display:none}
@@ -132,6 +136,81 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .moregrid a svg.i{width:24px;height:24px;color:var(--accent)}
 .moregrid a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
 
+/* ── 名詞解釋 ── */
+.term{display:inline!important;flex-direction:initial!important;padding:0!important;margin:0!important;border:0!important;border-bottom:1.5px dotted color-mix(in srgb,var(--accent) 70%,transparent)!important;font:inherit!important;color:inherit!important;cursor:help;border-radius:2px}
+.term:hover,.term:focus-visible{background:var(--accent-soft);outline:none}
+.gloss{position:fixed;z-index:70;max-width:min(340px,calc(100vw - 32px));background:var(--surface-solid);color:var(--ink);border:1px solid var(--line-2);border-radius:14px;box-shadow:var(--shadow-lg);padding:14px 16px 12px;font-size:.88rem;line-height:1.6}
+.gloss h4{margin:0 0 4px;font-family:var(--f-head);font-size:1.05rem;color:var(--accent)}
+.gloss p{margin:0 0 6px}
+.gloss .eg{font-size:.8rem;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:6px 8px;margin:0}
+.gloss .x{position:absolute;top:8px;right:8px;border:0;background:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px}
+@media (max-width:900px){.gloss{left:12px!important;right:12px;top:auto!important;bottom:calc(84px + env(safe-area-inset-bottom,0px));max-width:none}}
+.dict{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:8px}
+.dict div{padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.dict b{display:block;font-family:var(--f-head);color:var(--accent)}
+.dict span{font-size:.84rem;color:var(--muted)}
+
+/* ── 收折 ── */
+.cbtn{margin-left:auto;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);cursor:pointer;flex:none}
+.cbtn svg.i{width:16px;height:16px;transition:transform .2s}
+.collapsed .cbtn svg.i{transform:rotate(-90deg)}
+.card.collapsed>:not(header){display:none!important}
+.card.collapsed>header{margin-bottom:-2px;padding-bottom:0;border-bottom:0}
+.card>header{cursor:default}
+.card>header.togglable{cursor:pointer}
+.sec-title.togglable{cursor:pointer}
+.sec-title .cbtn{margin-left:auto}
+.showmore{display:flex;justify-content:center;margin-top:10px}
+.showmore button{border:1px dashed var(--line-2);background:transparent;color:var(--accent);padding:7px 16px;border-radius:999px;cursor:pointer;font-weight:600;font-size:.84rem}
+
+/* ── 頂部狀態摘要 ── */
+.pillwrap{display:flex;flex-direction:column;gap:8px}
+.pillsum{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:8px 12px;cursor:pointer;color:var(--ink);text-align:left}
+.pillsum .d{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600}
+.pillsum .d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--faint))}
+.pillsum .more{margin-left:auto;font-size:.76rem;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+.iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface-solid);color:var(--ink);cursor:pointer;flex:none}
+.iconbtn:hover{color:var(--accent);border-color:var(--accent)}
+.updinfo{display:inline-flex;align-items:center;gap:4px}
+@media (max-width:640px){.updsched{display:none}}
+
+/* ── 點選篩選 ── */
+button.chip{cursor:pointer;font:inherit;font-size:.74rem}
+button.chip[aria-pressed="true"]{outline:2px solid currentColor;outline-offset:1px;font-weight:700}
+.counts button{all:unset;box-sizing:border-box;padding:12px 14px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;cursor:pointer;border:2px solid transparent}
+.counts button:hover{border-color:var(--line-2)}
+.counts button[aria-pressed="true"]{border-color:currentColor;background:var(--surface-solid)}
+.filterhint{font-size:.76rem;color:var(--muted)}
+
+/* ── 市場溫度計 ── */
+.gauge{display:flex;align-items:center;gap:14px;padding:6px 4px 2px}
+.gauge svg{width:150px;height:86px;flex:none}
+.gauge b{display:block;font-family:var(--f-head);font-size:1.25rem}
+.gauge span{font-size:.8rem;color:var(--muted)}
+
+/* ── 有色標題圖示 ── */
+.card>header>svg.i{width:30px;height:30px;padding:6px;border-radius:9px;background:var(--accent-soft);color:var(--accent)}
+header:has(use[href="#i-flame"])>svg.i{background:var(--warn-soft);color:var(--warn)}
+header:has(use[href="#i-users"])>svg.i{background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet)}
+header:has(use[href="#i-alert"])>svg.i,header:has(use[href="#i-shield"])>svg.i{background:var(--up-soft);color:var(--up)}
+header:has(use[href="#i-cal"])>svg.i,header:has(use[href="#i-pulse"])>svg.i{background:var(--down-soft);color:var(--down)}
+.idxcard{background-image:radial-gradient(520px 260px at 92% 0%,var(--tint,transparent),transparent 70%)}
+.idxcard.up{--tint:var(--up-soft)} .idxcard.down{--tint:var(--down-soft)}
+
+/* ── 查個股 ── */
+.searchbig{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;border-radius:14px;border:1.5px solid var(--line-2);background:var(--surface-solid);margin-bottom:12px}
+.searchbig:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.searchbig svg.i{color:var(--muted);width:20px;height:20px}
+.searchbig input{border:0;background:transparent;font-size:1.05rem;padding:8px 4px;box-shadow:none!important}
+
+/* ── 持股本 ── */
+.vaultopts{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));width:100%}
+.vaultopts section{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line)}
+.vaultopts h3{font-size:1.05rem}
+.lock{max-width:none}
+.modebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px}
+.modebar b{font-family:var(--f-head);font-size:1.02rem}
+
 /* ── 面板 ── */
 .view{display:flex;flex-direction:column;gap:16px}
 .grid{display:grid;gap:16px}
@@ -145,7 +224,7 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .card>header .sub{font-family:var(--f-num);font-size:.7rem;color:var(--faint)}
 .eyebrow{font-size:.7rem;letter-spacing:.16em;color:var(--muted);font-weight:500}
 .sec-title{display:flex;align-items:baseline;gap:10px;margin:10px 4px -4px;flex-wrap:wrap}
-.sec-title svg.i{display:none}
+.sec-title>svg.i{display:none}
 .sec-title h2{font-size:1.2rem}
 .sec-title .sub{font-family:var(--f-num);font-size:.72rem;color:var(--faint)}
 
@@ -155,8 +234,8 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .delta{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-num);font-weight:700;font-size:.95rem;padding:4px 10px;border-radius:999px;margin-bottom:8px}
 .delta.up{background:var(--up-soft)} .delta.down{background:var(--down-soft)}
 .idx-meta{display:flex;gap:0;flex-wrap:wrap;margin-top:14px;padding:4px 0;border-radius:12px;background:var(--surface-2)}
-.idx-meta span{display:flex;flex-direction:column;padding:6px 14px;font-size:.7rem;color:var(--muted);border-right:1px solid var(--line)}
-.idx-meta span:last-child{border-right:0}
+.idx-meta>span{display:flex;flex-direction:column;padding:6px 14px;font-size:.7rem;color:var(--muted);border-right:1px solid var(--line)}
+.idx-meta>span:last-child{border-right:0}
 .idx-meta b{color:var(--ink);font-family:var(--f-num);font-weight:700;font-size:.92rem}
 .chartbox{position:relative;height:250px;margin-top:12px}
 .chartbox.sm{height:210px}
@@ -461,6 +540,9 @@ canvas{max-width:100%}
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
 </svg>
 
@@ -472,7 +554,7 @@ canvas{max-width:100%}
     <a href="#picks"><svg class="i"><use href="#i-target"/></svg><span>選股</span></a>
     <a href="#daytrade"><svg class="i"><use href="#i-bolt"/></svg><span>當沖即時</span></a>
     <a href="#portfolio"><svg class="i"><use href="#i-wallet"/></svg><span>持股</span></a>
-    <a href="#screener" data-more><svg class="i"><use href="#i-grid"/></svg><span>篩選</span></a>
+    <a href="#screener" data-more><svg class="i"><use href="#i-search"/></svg><span>查個股</span></a>
     <a href="#news" data-more><svg class="i"><use href="#i-news"/></svg><span>新聞</span></a>
     <a href="#backtest" data-more><svg class="i"><use href="#i-trophy"/></svg><span>回測</span></a>
     <a href="#setup" data-more><svg class="i"><use href="#i-gear"/></svg><span>設定</span></a>
@@ -482,13 +564,13 @@ canvas{max-width:100%}
 </aside>
 <div class="col">
   <header class="topbar">
-    <div class="tb1"><span class="mark sm" aria-hidden="true">股</span><div><h1 id="viewTitle">總覽</h1><span class="basis" id="basis">載入資料中…</span></div><span class="spacer"></span><span class="livedot" id="liveStamp">盤後</span><button class="themebtn" type="button" data-theme-toggle aria-label="切換深淺色"><svg class="i"><use href="#i-moon"/></svg><span>深淺色</span></button></div>
-    <div class="pills" id="pills"></div>
+    <div class="tb1"><span class="mark sm" aria-hidden="true">股</span><div><h1 id="viewTitle">總覽</h1><span class="basis" id="basis">載入資料中…</span></div><span class="spacer"></span><span class="livedot" id="liveStamp">盤後</span><button class="iconbtn" id="searchBtn" type="button" aria-label="查個股"><svg class="i"><use href="#i-search"/></svg></button><button class="themebtn" type="button" data-theme-toggle aria-label="切換深淺色"><svg class="i"><use href="#i-moon"/></svg><span>深淺色</span></button></div>
+    <div class="pillwrap"><button class="pillsum" id="pillSum" type="button" aria-expanded="false" aria-controls="pills"></button><div class="pills" id="pills" hidden></div></div>
   </header>
 <main class="wrap">
   <section class="view" id="v-overview">
     <div class="hero">
-      <div class="card">
+      <div class="card idxcard" id="idxCard">
         <header><span class="eyebrow">發行量加權股價指數</span><span class="spacer"></span><div class="seg sm" id="idxSeg" role="group" aria-label="指數區間"><button type="button" data-k="22" aria-pressed="false">1 個月</button><button type="button" data-k="60" aria-pressed="true">3 個月</button></div></header>
         <div class="idx-top"><div class="idx-big" id="idxBig">—</div><div class="delta" id="idxDelta"></div></div>
         <div class="idx-meta" id="idxMeta"></div>
@@ -496,6 +578,7 @@ canvas{max-width:100%}
       </div>
       <div class="card health">
         <header style="margin-bottom:0"><svg class="i"><use href="#i-pulse"/></svg><h2>市場體檢</h2></header>
+        <div class="gauge" id="gauge"></div>
         <div class="stage" id="stage"></div>
         <div id="alarmList" style="display:flex;flex-direction:column;gap:8px"></div>
         <div><div class="split" id="breadth"></div><div class="split-l" id="breadthL"></div></div>
@@ -510,7 +593,7 @@ canvas{max-width:100%}
     <div class="ticker" id="globalGrid"></div>
     <div class="grid g2">
       <div class="card">
-        <header><svg class="i"><use href="#i-flame"/></svg><h2>類股熱力圖</h2><span class="spacer"></span><span class="sub" id="secSub"></span></header>
+        <header><svg class="i"><use href="#i-flame"/></svg><h2>類股熱力圖</h2><span class="sub" id="secSub"></span><span class="spacer"></span><div class="seg sm" id="heatSeg" role="group" aria-label="類股排序"><button type="button" data-k="up" aria-pressed="true">最強 10</button><button type="button" data-k="down" aria-pressed="false">最弱 10</button><button type="button" data-k="all" aria-pressed="false">全部</button></div></header>
         <div class="heat" id="heat"></div>
         <p class="note" style="margin-bottom:0">點類股可在「個股篩選」看該產業全部個股。</p>
       </div>
@@ -535,6 +618,7 @@ canvas{max-width:100%}
       </div>
     </div>
     <div class="callout" id="pickIntro"></div>
+    <div class="chips" id="pickFilter"></div>
     <div class="cards" id="pickCards"></div>
   </section>
 
@@ -551,19 +635,40 @@ canvas{max-width:100%}
 
   <section class="view" id="v-portfolio" hidden>
     <div id="pfLock" hidden class="card lock">
-      <h2>持股資料已加密</h2>
-      <p class="note">持股與損益只以加密形式存放。輸入您在 GitHub 設定的密碼即可在這台裝置解開，密碼不會傳到任何地方。</p>
-      <label class="f" style="width:100%">密碼<input id="pwIn" type="password" autocomplete="current-password"></label>
-      <label class="note"><input id="pwRemember" type="checkbox" style="width:auto"> 在這台裝置記住密碼</label>
-      <div class="actions"><button class="btn primary" id="pwBtn" type="button">解鎖</button><span class="note" id="pwMsg"></span></div>
+      <h2>開啟持股</h2>
+      <p class="note" style="margin:0">持股只以加密方式存放，沒有密碼誰都看不到。選一種方式：</p>
+      <div class="vaultopts">
+        <section>
+          <h3>站長的雲端持股</h3>
+          <p class="note" style="margin:0">網站擁有者專用，資料存在雲端並每天自動分析。</p>
+          <label class="f">密碼<input id="pwIn" type="password" autocomplete="current-password"></label>
+          <label class="note"><input id="pwRemember" type="checkbox" style="width:auto"> 在這台裝置記住密碼</label>
+          <div class="actions"><button class="btn primary" id="pwBtn" type="button">解鎖</button><span class="note" id="pwMsg"></span></div>
+        </section>
+        <section>
+          <h3>我的持股本</h3>
+          <p class="note" style="margin:0">給朋友用：每個人取一個名字、設自己的密碼。持股加密後<b>只存在這台手機或電腦</b>，別人（包含站長）都看不到。</p>
+          <div id="vaultOpen"></div>
+          <details class="more"><summary><svg class="i"><use href="#i-edit"/></svg>建立新的持股本</summary>
+            <div class="form" style="grid-template-columns:1fr">
+              <label class="f">名字（例如：小明）<input id="vName" maxlength="20"></label>
+              <label class="f">密碼<input id="vPw" type="password" autocomplete="new-password"></label>
+              <label class="f">再輸入一次密碼<input id="vPw2" type="password" autocomplete="new-password"></label>
+            </div>
+            <div class="actions" style="margin-top:10px"><button class="btn primary" id="vCreate" type="button">建立並開啟</button><span class="note" id="vMsg"></span></div>
+          </details>
+          <label class="btn" for="vImport" style="justify-content:center">匯入備份檔<input id="vImport" type="file" accept=".json,application/json" hidden></label>
+        </section>
+      </div>
     </div>
     <div id="pfBody" class="view">
+      <div class="card modebar" id="modeBar"></div>
       <div class="pfhero">
         <div class="card" id="pfSummary"></div>
         <div class="card"><header><h2>部位配置</h2><span class="spacer"></span><span class="sub">單一個股上限 20%</span></header><div class="chartbox sm" style="margin-top:0"><canvas id="pfChart" aria-label="持股比重"></canvas></div></div>
       </div>
       <div class="card" id="pfActionsCard"><header><svg class="i"><use href="#i-shield"/></svg><h2>第一行動：先處理風險</h2></header><ol class="orders" id="pfActions"></ol></div>
-      <div class="sec-title"><svg class="i" style="color:var(--accent)"><use href="#i-wallet"/></svg><h2>持股健診</h2><span class="sub" id="pfSub"></span><span class="spacer" style="flex:1"></span><span class="chips"><span class="chip green"><i class="sq"></i>續抱</span><span class="chip amber"><i class="sq"></i>注意</span><span class="chip red"><i class="sq"></i>該處理</span></span></div>
+      <div class="sec-title"><svg class="i" style="color:var(--accent)"><use href="#i-wallet"/></svg><h2>持股健診</h2><span class="sub" id="pfSub"></span><span class="spacer" style="flex:1"></span><span class="chips" id="pfLegend"><button type="button" class="chip green" data-lf="green" aria-pressed="false"><i class="sq"></i>續抱</button><button type="button" class="chip amber" data-lf="amber" aria-pressed="false"><i class="sq"></i>注意</button><button type="button" class="chip red" data-lf="red" aria-pressed="false"><i class="sq"></i>該處理</button></span></div>
       <div class="hcards" id="hcards"></div>
       <details class="more card"><summary><svg class="i"><use href="#i-grid"/></svg>表格檢視</summary><div class="tablewrap"><table id="pfTable"></table></div></details>
       <div class="card">
@@ -615,9 +720,10 @@ canvas{max-width:100%}
 
   <section class="view" id="v-screener" hidden>
     <div class="card">
-      <header><svg class="i"><use href="#i-grid"/></svg><h2>全市場個股</h2><span class="sub" id="scrSub"></span></header>
+      <header><svg class="i"><use href="#i-search"/></svg><h2>查個股</h2><span class="sub" id="scrSub"></span></header>
+      <label class="searchbig"><svg class="i"><use href="#i-search"/></svg><input id="q" type="search" placeholder="輸入代號或名稱，例如 2330、台積電、0050" aria-label="搜尋個股" enterkeyhint="search"></label>
       <div class="actions" style="margin-bottom:12px">
-        <input id="q" type="search" placeholder="搜尋代號或名稱" style="max-width:200px" aria-label="搜尋個股">
+        <select id="mktSel" style="max-width:130px" aria-label="市場"><option value="">全部市場</option><option value="市">上市</option><option value="櫃">上櫃</option><option value="興">興櫃</option><option value="E">ETF</option></select>
         <select id="indSel" style="max-width:160px" aria-label="產業"><option value="">全部產業</option></select>
         <div class="seg" id="scrSeg" role="group" aria-label="篩選">
           <button type="button" data-k="all" aria-pressed="true">全部</button>
@@ -662,15 +768,16 @@ canvas{max-width:100%}
         </div>
         <div class="actions" style="margin-top:12px"><button class="btn primary" id="saveCfg" type="button">儲存在這台裝置</button><button class="btn danger" id="clearCfg" type="button">清除</button></div>
       </div>
+      <div class="card" data-start-collapsed>
+        <header><svg class="i"><use href="#i-book"/></svg><h2>名詞小辭典</h2><span class="sub">點網站上有虛線的字也能看解釋</span></header>
+        <div class="dict" id="dict"></div>
+      </div>
       <div class="card">
         <header><h2>資料品質</h2><span class="spacer"></span><span class="sub">A 官方｜B 次級｜暫缺</span></header>
         <div class="list" id="quality"></div>
       </div>
     </div>
-    <div class="card">
-      <header><h2>LINE 晨報預覽</h2><span class="spacer"></span><span class="sub">每個交易日早上推送</span></header>
-      <div class="cards" id="linePrev"></div>
-    </div>
+
   </section>
 
   <p class="foot">本網站為技術面篩選與風控紀律參考，非投資建議，最終決策由您自行判斷。資料來源：證交所、櫃買中心、期交所（官方）；Yahoo Finance、鉅亨網（次級）。<span id="ver"></span></p>
@@ -680,7 +787,7 @@ canvas{max-width:100%}
 
 <div class="moremenu" id="moreMenu" hidden>
   <div class="moregrid">
-    <a href="#screener"><svg class="i"><use href="#i-grid"/></svg><span>個股篩選</span></a>
+    <a href="#screener"><svg class="i"><use href="#i-search"/></svg><span>查個股</span></a>
     <a href="#news"><svg class="i"><use href="#i-news"/></svg><span>財經新聞</span></a>
     <a href="#backtest"><svg class="i"><use href="#i-trophy"/></svg><span>勝率回測</span></a>
     <a href="#setup"><svg class="i"><use href="#i-gear"/></svg><span>設定</span></a>
@@ -732,6 +839,198 @@ const statusTone = s => /🟢/.test(s) ? "green" : /🔴|⛔/.test(s) ? "red" : 
 const PARTMAX = {趨勢: 30, 相對強弱: 20, 籌碼: 25, 基本面: 15, 風險: 10};
 const partBars = parts => `<div class="bars">${Object.entries(parts || {}).map(([k, v]) => `<div class="bar"><span>${k}</span><span class="t"><i style="width:${(v / PARTMAX[k] * 100).toFixed(0)}%"></i></span><span class="v">${v}/${PARTMAX[k]}</span></div>`).join("")}</div>`;
 
+
+/* ───────── 名詞小辭典（點有虛線的字會跳出解釋） ───────── */
+const GLOSS = {
+  "多頭": ["多頭", "大家看好、股價一路往上的行情。像搭上升電梯，順勢做多比較容易賺。", "例：指數站上月線、季線且均線往上＝多頭格局。"],
+  "空頭": ["空頭", "大家看壞、股價一路往下的行情。這時買股票像逆風騎車，最重要的是保住現金。", "例：本站「部位級距：空頭」時，單檔最多只放 5%。"],
+  "部位": ["部位", "你在某檔股票（或整體股市）投入的金額。「部位大」＝放很多錢在上面。", "例：台積電市值 19 萬、總資產 100 萬，部位占 19%。"],
+  "部位級距": ["部位級距", "依大盤好壞決定能放多少錢在股票上。行情越差，單檔上限越低、現金要留越多。", "多頭：單檔≤15%、現金≥15%｜偏弱：≤10%、≥25%｜空頭：≤5%、≥40%。"],
+  "單檔": ["單檔上限", "一檔股票最多能占你總資產的比例，避免押太重一檔、一跌就重傷。", "例：單檔≤5%、總資產 100 萬 → 一檔最多買 5 萬。"],
+  "現金": ["現金比重", "沒有投入股市、留在手上的錢占總資產的比例。空頭時現金就是你的防護罩。", "例：總資產 100 萬、現金 40 萬 → 現金比重 40%。"],
+  "中長期": ["中長期", "打算抱幾天到幾週以上的投資方式，看的是趨勢和法人籌碼，不是當天漲跌。", ""],
+  "斷路器": ["期望值斷路器", "最近的選股成績如果平均是賠錢（期望值為負）或連輸 4 筆，系統就自動「暫停新買進」，只觀察，避免越賠越多。", "出現一筆明確獲利或期望值轉正後自動解除。"],
+  "四大警報": ["四大警報", "四個大盤危險訊號：跌破月線、跌破季線、跌家數是漲家數 2 倍以上、外資期貨大量放空。亮越多越危險。", "3～4 個亮＝很危險，先保守。"],
+  "Stage": ["階段（Stage 1～4）", "把股市分成四個季節：1 打底盤整、2 上升（最好賺）、3 做頭（高檔震盪）、4 下降（最危險）。", "Stage 4 下降：以保住本金為主，不急著買。"],
+  "月線": ["月線（20 日均線）", "最近 20 個交易日（約一個月）收盤價的平均。股價在月線上＝短期偏強，跌破＝短期轉弱。", "「跌破月線」常是短線轉弱的第一個警訊。"],
+  "季線": ["季線（50～60 日均線）", "最近約一季的平均價格，代表中期趨勢。跌破季線通常代表中期轉弱。", ""],
+  "年線": ["年線（200 日均線）", "最近約一年的平均價格，代表長期趨勢。站上年線＝長期偏多。", ""],
+  "5MA": ["5MA（5 日均線）", "最近 5 個交易日（一週）的平均價格，反映最短期的方向。", ""],
+  "均線": ["均線", "一段時間收盤價的平均值連成的線，用來看趨勢方向。5MA 看一週、月線看一個月、季線看一季。", ""],
+  "乖離": ["乖離", "股價離均線有多遠。離太遠（漲太多）容易拉回，所以本站設「乖離太大不追」。", "例：乖離 MA5 +8% ＝ 比 5 日平均高 8%。"],
+  "漲跌家數": ["漲跌家數（廣度）", "今天上漲和下跌的股票各有幾檔，看「大部分股票」是漲還是跌，比只看指數更真實。", "跌÷漲 ≥ 2＝下跌股是上漲股的兩倍以上，偏弱。"],
+  "外資期貨": ["外資期貨淨部位", "外資在台指期貨上「做多口數減做空口數」。負很多＝外資大量押注台股會跌。", "本站以 −6 萬口為警戒線。"],
+  "夜盤": ["台指期夜盤", "台指期貨在下午 3 點到隔天清晨 5 點的交易，反映美股等晚上的消息，可預估隔天開盤方向。", ""],
+  "法人": ["三大法人", "外資、投信（基金公司）、自營商（券商自己的部位）三種大型機構投資人。他們買賣量大，常影響股價方向。", "「法人買超」＝這三種機構買的比賣的多。"],
+  "外資": ["外資", "外國的投資機構，台股最大的買賣力量之一。連續大買通常對股價有支撐。", ""],
+  "投信": ["投信", "國內的基金公司（例如發行 ETF、基金的公司），常在季底作帳、偏好中小型成長股。", ""],
+  "自營商": ["自營商", "證券公司用自己的錢在買賣，進出比較短線。", ""],
+  "融資": ["融資", "向券商借錢買股票。融資大增代表散戶借錢追高，籌碼較亂；融資減少代表籌碼變乾淨。", ""],
+  "借券": ["借券賣出", "借別人的股票先賣掉，等跌了再買回來還（看壞的人在做）。比例高代表很多人看空這檔。", ""],
+  "當沖": ["當沖", "同一天買進又賣出、不留到隔天的短線交易。賺賠都快，必須嚴守停損。", ""],
+  "當沖比": ["當沖比", "今天成交量裡有多少是當沖。太高（≥40%）代表短線客很多、股價容易暴起暴落。", ""],
+  "VWAP": ["VWAP（當日成交均價）", "今天所有成交的平均價格（依成交量加權）。現價在 VWAP 上面＝今天買的人大多賺錢，偏強。", "本站當沖規則：站穩 VWAP 才進、跌破就走。"],
+  "紅K": ["紅 K", "今天收盤比開盤高的 K 棒（台股用紅色代表漲）。代表盤中買方較強。", ""],
+  "量能": ["量能進度", "到目前為止的成交量，跟「平常這個時間應該有的量」相比。≥1.2 倍＝今天特別有人氣。", ""],
+  "開盤區間": ["開盤區間", "開盤後前 15 分鐘的最高價和最低價。突破區間高點常代表多方勝出。", ""],
+  "停損": ["停損", "事先設好「跌到這裡就賣」的價格，避免小賠變大賠。設了就要遵守、不能挪。", "例：買 100 元、停損 93 元 → 最多賠 7%。"],
+  "停利": ["停利", "漲到目標價就先賣掉一部分，把賺到的錢放進口袋。", ""],
+  "移動停利": ["移動停利", "股價往上時，把停損價跟著往上移。這樣可以抱住大漲，但一回頭就出場、保住大部分獲利。", ""],
+  "進場區": ["進場區", "建議買進的價格範圍，通常在均線附近，避免追在最高點。", ""],
+  "目標一": ["目標一（2R）", "R＝你願意承擔的風險（進場價到停損的距離）。2R＝賺到風險的 2 倍時先停利。", "例：進場 100、停損 95（R＝5），2R 目標＝110。"],
+  "處置股": ["處置股", "因為漲跌太誇張被證交所「管制」的股票，交易會被限制（例如分盤撮合、要先付錢），本站一律避開。", ""],
+  "五道門檻": ["五道門檻（紅旗排除區）", "選股前先剔除危險股：當天漲停附近、當沖太多、借券賣太多、法人連 3 天賣、處置股。", ""],
+  "相對吸籌": ["相對吸籌", "法人買超張數 ÷ 當天成交量。比例越高＝法人買得越積極、越集中。", ""],
+  "綜合評分": ["綜合評分", "本站用五個面向打的分數（0～100）：趨勢 30、相對強弱 20、籌碼 25、基本面 15、風險 10。越高越好。", ""],
+  "RS": ["RS 強度", "這檔股票最近 60 天漲幅，在全市場排第幾（0～99）。99＝比 99% 的股票都強。", ""],
+  "營收年增": ["營收年增", "這個月的營業收入比去年同月成長多少。持續成長通常代表公司生意變好。", ""],
+  "本益比": ["本益比（PE）", "股價 ÷ 每股盈餘。可以想成「回本要幾年」。越低通常越便宜，但也要看產業。", "例：本益比 10 ＝ 以目前獲利約 10 年回本。"],
+  "殖利率": ["殖利率", "一年配的股利 ÷ 股價。像存款利率，越高代表配息越多。", "例：股價 100、配 5 元 → 殖利率 5%。"],
+  "淨值比": ["股價淨值比（PB）", "股價 ÷ 每股淨值（公司資產扣掉負債）。小於 1 ＝ 股價比公司帳面價值還便宜。", ""],
+  "RSI": ["RSI", "衡量最近漲跌力道的指標（0～100）。>70 偏熱、<30 偏冷（可能超跌）。", ""],
+  "KD": ["KD 指標", "看股價在最近高低區間的位置。K 線往上穿過 D 線（黃金交叉）常是轉強訊號。", ""],
+  "MACD": ["MACD", "用長短期均線差距看趨勢轉折。柱子由負轉正＝可能轉強。", ""],
+  "ATR": ["ATR（平均波動）", "股票平常一天大約上下波動多少。用來設停損：波動大的股票停損要放寬一點。", ""],
+  "期望值": ["期望值", "平均每做一筆會賺或賠多少 %（把勝率和賺賠大小一起算）。正的才值得做。", "勝率 40%、贏時賺 10%、輸時賠 5% → 期望值 = 0.4×10 − 0.6×5 = +1%。"],
+  "勝率": ["勝率", "做的筆數裡有幾成是賺錢的。勝率高不代表一定賺，還要看賺賠比。", ""],
+  "賺賠比": ["賺賠比", "平均賺的幅度 ÷ 平均賠的幅度。大於 1 代表賺的時候比賠的時候多。", ""],
+  "52 週": ["52 週高低", "最近一年的最高價和最低價。可以看出現在價格在一年裡的相對位置。", ""],
+  "興櫃": ["興櫃", "還沒正式上市櫃的公司，成交量少、價格波動大，風險較高。", ""],
+  "上櫃": ["上櫃", "在櫃買中心交易的公司，多為中小型股。", ""],
+  "ETF": ["ETF", "一籃子股票包成一檔來買賣，例如 0050 等於一次買台灣前 50 大公司。適合分散風險。", ""],
+  "零股": ["零股", "不到 1 張（1000 股）的股數。資金不多也能買高價股。", ""],
+  "觀察池": ["觀察池", "條件不錯、但時機還沒到的股票，先放著觀察，等訊號出現再考慮。", ""],
+  "低估值": ["低估值", "以本益比、殖利率、淨值比來看，價格相對便宜的股票。", ""],
+  "VIX": ["VIX 恐慌指數", "美股市場的恐慌程度。>25 偏恐慌、>30 很恐慌，常伴隨大跌。", ""],
+  "費城半導體": ["費城半導體指數（費半）", "美國半導體股的指數，跟台積電等台灣電子股連動很高。", ""],
+  "ADR": ["台積電 ADR", "台積電在美國掛牌交易的股票，晚上的漲跌常預告隔天台積電的方向。", ""],
+  "更新時間": ["資料更新時間", "盤後資料（法人、選股、評分）：每個交易日 07:20 與 17:40 自動更新。盤中報價、當沖判斷、新聞：開盤時段（09:00～13:30）約每 5 分鐘更新一次。", "GitHub 排程在尖峰時可能晚幾分鐘；下單前請以券商 App 即時報價為準。"],
+};
+const GLOSS_ALIAS = {"跌破月線": "月線", "距月線": "月線", "跌破季線": "季線", "距季線": "季線", "季線(50MA)": "季線", "站上年線": "年線", "距 5MA": "5MA", "乖離MA5": "乖離", "乖離月線": "乖離", "乖離 MA5": "乖離",
+  "廣度": "漲跌家數", "跌÷漲": "漲跌家數", "外資期貨淨部位": "外資期貨", "台指夜盤": "夜盤", "三大法人": "法人", "法人買超": "法人", "融資增減": "融資", "借券賣出": "借券", "當沖占比": "當沖比", "當沖即時": "當沖",
+  "站穩 VWAP": "VWAP", "量增": "量能", "量能進度": "量能", "部位級距": "部位級距", "單檔上限": "單檔", "現金比重": "現金", "現金下限": "現金", "期望值斷路器": "斷路器", "紅旗排除區": "五道門檻",
+  "RS 強度": "RS", "股價淨值比": "淨值比", "ATR 停損": "ATR", "ATR 波動": "ATR", "目標一（2R）": "目標一", "目標一": "目標一", "52 週高": "52 週", "52 週低": "52 週", "恐慌指數": "VIX",
+  "階段": "Stage", "空頭": "空頭", "多頭": "多頭", "停損": "停損", "停利": "停利"};
+const TERM_KEYS = [...new Set([...Object.keys(GLOSS), ...Object.keys(GLOSS_ALIAS)])].sort((a, b) => b.length - a.length);
+const TERM_RE = new RegExp(TERM_KEYS.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"));
+const TERM_SEL = ".pill i,.pill b,.kv span,.mini span,.plan span,.lv span,.idx-meta span,.alarm>span:nth-child(2),.stage b,.stage span,.cklist div,.checks div,.card>header h2,.sec-title h2,.counts span,.statrow span,.rets span,thead th,.bar>span:first-child,.hbar>span:first-child,.dtfoot span,.wl span,#dtPhase b,.legend span,.gauge span,.callout b,.basis";
+function linkTerms(root) {
+  root.querySelectorAll(TERM_SEL).forEach(el => {
+    if (el.dataset.gl) return;
+    el.dataset.gl = "1";
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement.closest(".term,button,a,input,select,textarea,svg") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+    const node = walker.nextNode(); if (!node) return;
+    const m = node.data.match(TERM_RE); if (!m) return;
+    const key = GLOSS_ALIAS[m[0]] || m[0]; if (!GLOSS[key]) return;
+    const after = node.splitText(m.index); after.splitText(m[0].length);
+    const span = document.createElement("span");
+    span.className = "term"; span.dataset.term = key; span.tabIndex = 0; span.setAttribute("role", "button"); span.textContent = after.data;
+    after.replaceWith(span);
+  });
+}
+const gloss = document.createElement("div"); gloss.className = "gloss"; gloss.hidden = true; gloss.setAttribute("role", "dialog"); document.body.append(gloss);
+function showGloss(el) {
+  const [title, desc, eg] = GLOSS[el.dataset.term] || [];
+  if (!title) return;
+  (document.querySelector("dialog[open]") || document.body).append(gloss);
+  gloss.innerHTML = `<button class="x" type="button" aria-label="關閉">✕</button><h4>${esc(title)}</h4><p>${esc(desc)}</p>${eg ? `<p class="eg">${esc(eg)}</p>` : ""}`;
+  gloss.hidden = false;
+  const r = el.getBoundingClientRect(), w = gloss.offsetWidth, h = gloss.offsetHeight;
+  let x = Math.min(Math.max(12, r.left), innerWidth - w - 12), y = r.bottom + 8;
+  if (y + h > innerHeight - 12) y = Math.max(12, r.top - h - 8);
+  gloss.style.left = x + "px"; gloss.style.top = y + "px";
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest(".term");
+  if (t) { e.preventDefault(); e.stopPropagation(); showGloss(t); return; }
+  if (!gloss.hidden && !e.target.closest(".gloss")) gloss.hidden = true;
+  if (e.target.closest(".gloss .x")) gloss.hidden = true;
+}, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape") gloss.hidden = true; if ((e.key === "Enter" || e.key === " ") && e.target.classList?.contains("term")) { e.preventDefault(); showGloss(e.target); } });
+addEventListener("scroll", () => { if (!gloss.hidden && innerWidth > 900) gloss.hidden = true; }, {passive: true});
+function renderDict() {
+  $("#dict").innerHTML = Object.values(GLOSS).map(([t, d, eg]) => `<div><b>${esc(t)}</b><span>${esc(d)}${eg ? "<br>" + esc(eg) : ""}</span></div>`).join("");
+}
+
+/* ───────── 收折：標題右側的箭頭，可收起不常看的區塊（記在這台裝置） ───────── */
+function setupCollapsibles(root = document) {
+  const saved = store.get("collapsed", {});
+  root.querySelectorAll(".card>header").forEach(h => {
+    if (h.dataset.cz || h.closest("#pfLock") || h.closest(".sh-in")) return;
+    const card = h.parentElement, key = (h.querySelector("h2")?.textContent || "").trim();
+    if (!key || card.classList.contains("pick") || card.classList.contains("hcard") || card.classList.contains("dtc")) return;
+    h.dataset.cz = "1"; h.classList.add("togglable");
+    const b = document.createElement("button"); b.type = "button"; b.className = "cbtn"; b.setAttribute("aria-label", "收起或展開 " + key); b.innerHTML = icon("chev");
+    h.append(b);
+    const start = key in saved ? saved[key] : card.hasAttribute("data-start-collapsed");
+    card.classList.toggle("collapsed", start); b.setAttribute("aria-expanded", String(!start));
+    h.addEventListener("click", e => {
+      if (e.target.closest(".seg,input,select,a,.term,.chip,.btn") && !e.target.closest(".cbtn")) return;
+      const c = !card.classList.contains("collapsed");
+      card.classList.toggle("collapsed", c); b.setAttribute("aria-expanded", String(!c));
+      const sv = store.get("collapsed", {}); sv[key] = c; store.set("collapsed", sv);
+      if (!c) setTimeout(redrawCharts, 0);
+    });
+  });
+  root.querySelectorAll(".sec-title").forEach(h => {
+    if (h.dataset.cz || h.closest(".sh-in")) return;
+    const body = h.nextElementSibling, key = "sec:" + (h.querySelector("h2")?.textContent || "").trim();
+    if (!body) return;
+    h.dataset.cz = "1"; h.classList.add("togglable");
+    const b = document.createElement("button"); b.type = "button"; b.className = "cbtn"; b.setAttribute("aria-label", "收起或展開"); b.innerHTML = icon("chev");
+    h.append(b);
+    const st = !!store.get("collapsed", {})[key];
+    body.hidden = st; h.classList.toggle("collapsed", st);
+    h.addEventListener("click", e => {
+      if (e.target.closest(".chip,.term,button:not(.cbtn)")) return;
+      const c = !body.hidden; body.hidden = c; h.classList.toggle("collapsed", c);
+      const sv = store.get("collapsed", {}); sv[key] = c; store.set("collapsed", sv);
+    });
+  });
+}
+let _enhT;
+const enhanceObs = new MutationObserver(() => { clearTimeout(_enhT); _enhT = setTimeout(() => { enhanceObs.disconnect(); linkTerms(document.body); setupCollapsibles(); observeEnhance(); }, 60); });
+function observeEnhance() { enhanceObs.observe(document.body, {childList: true, subtree: true}); }
+
+/* ───────── 頂部狀態摘要（可展開） ───────── */
+function renderPillSum() {
+  const g = S.rep.market.regime, r = S.rep;
+  const col = k => k === "green" || k === "normal" ? "var(--down)" : k === "yellow" || k === "cautious" ? "var(--warn)" : "var(--up)";
+  const open = !$("#pills").hidden;
+  $("#pillSum").innerHTML = `<span class="d" style="--dot:${col(g.level.key)}">${esc(plain(g.level.label))}</span><span class="d" style="--dot:${col(g.longterm.key)}">中長期${esc(g.longterm.label)}</span><span class="d" style="--dot:${col(g.daytrade.key)}">當沖${esc(plain(g.daytrade.label))}</span>${r.breaker.on ? `<span class="d" style="--dot:var(--up)">斷路器啟動</span>` : ""}<span class="more">${open ? "收起" : "詳細"}${icon("chev")}</span>`;
+  $("#pillSum").setAttribute("aria-expanded", String(open));
+}
+$("#pillSum").addEventListener("click", () => { $("#pills").hidden = !$("#pills").hidden; store.set("pillsOpen", !$("#pills").hidden); renderPillSum(); });
+if (store.get("pillsOpen")) $("#pills").hidden = false;
+$("#searchBtn").addEventListener("click", () => { location.hash = "#screener"; setTimeout(() => $("#q").focus(), 60); });
+
+/* ───────── 下次更新時間 ───────── */
+function nextUpdate() {
+  const n = new Date(Date.now() + (new Date().getTimezoneOffset() + 480) * 60000), d = n.getDay(), hm = n.getHours() * 60 + n.getMinutes();
+  const fmt2 = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  if (d >= 1 && d <= 5) {
+    if (hm < 440) return "今天 07:20";
+    if (hm >= 540 && hm < 810) return "約 " + fmt2(Math.ceil((hm + 1) / 5) * 5) + "（盤中每 5 分鐘）";
+    if (hm < 540) return "09:00 開盤後";
+    if (hm < 1060) return "今天 17:40";
+  }
+  return d === 5 || d === 6 ? "週一 07:20" : "明天 07:20";
+}
+
+/* ───────── 市場溫度計 ───────── */
+function renderGauge() {
+  const g = S.rep.market.regime, b = g.breadth, tot = (b.up || 0) + (b.down || 0) || 1;
+  let sc = 50 + Math.max(-20, Math.min(20, (g.vs_ma20 || 0) * 2)) + ((b.up || 0) - (b.down || 0)) / tot * 15 - g.alarm_count * 6 + Math.max(-10, Math.min(10, (g.pct || 0) * 2));
+  sc = Math.round(Math.max(0, Math.min(100, sc)));
+  const lab = sc >= 75 ? ["過熱", "大家都很樂觀，小心追高"] : sc >= 58 ? ["偏熱", "多方占優，順勢但別追高"] : sc >= 42 ? ["中性", "多空拉鋸，挑好股就好"] : sc >= 25 ? ["偏冷", "氣氛保守，以控制風險為主"] : ["冰冷", "市場恐慌，保住現金最重要"];
+  const ang = Math.PI * (1 - sc / 100), x = 75 + 58 * Math.cos(ang), y = 78 - 58 * Math.sin(ang);
+  $("#gauge").innerHTML = `<svg viewBox="0 0 150 86" role="img" aria-label="市場溫度 ${sc} 分，${lab[0]}"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset=".5" stop-color="var(--warn)"/><stop offset="1" stop-color="var(--up)"/></linearGradient></defs>
+    <path d="M17 78 A58 58 0 0 1 133 78" fill="none" stroke="var(--sunken)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M17 78 A58 58 0 0 1 133 78" fill="none" stroke="url(#gg)" stroke-width="12" stroke-linecap="round" opacity=".9"/>
+    <line x1="75" y1="78" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/><circle cx="75" cy="78" r="6" fill="var(--surface-solid)" stroke="var(--ink)" stroke-width="2.5"/>
+</svg>
+    <div><span>市場溫度</span><b>${lab[0]} <span class="num" style="font-size:1.1rem;color:var(--muted)">${sc}／100</span></b><span>${lab[1]}</span></div>`;
+}
 const S = {rep: null, stocks: [], byCode: {}, priv: null, live: null, holdings: null, cash: null, charts: {}, idxN: 60, instSide: "buy"};
 
 const b64 = { dec: s => Uint8Array.from(atob(s), c => c.charCodeAt(0)), enc: u => btoa(String.fromCharCode(...new Uint8Array(u))) };
@@ -758,7 +1057,7 @@ function route() {
   $$("#moreMenu a").forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#" + v ? "page" : "false"));
   $("#moreBtnNav").classList.toggle("on", ["screener", "news", "backtest", "setup"].includes(v));
   closeMore();
-  $("#viewTitle").textContent = {overview: "總覽", picks: "選股建議", daytrade: "當沖即時", portfolio: "我的持股", screener: "個股篩選", news: "財經新聞", backtest: "勝率回測", setup: "設定"}[v];
+  $("#viewTitle").textContent = {overview: "總覽", picks: "選股建議", daytrade: "當沖即時", portfolio: "我的持股", screener: "查個股", news: "財經新聞", backtest: "勝率回測", setup: "設定"}[v];
   if (v === "screener") renderScreener();
   if (S.rep) setTimeout(redrawCharts, 0);
 }
@@ -796,7 +1095,8 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", onTheme)
 function renderTop() {
   const r = S.rep, g = r.market.regime;
   const md = s => { const [, m, d] = s.split("-"); return `${+m}/${+d}`; };
-  $("#basis").textContent = `資料基準 ${md(r.basis)} 收盤｜報告日 ${md(r.report_date)}`;
+  $("#basis").innerHTML = `資料基準 ${md(r.basis)} 收盤｜<span class="updinfo"><span class="term" data-term="更新時間" role="button" tabindex="0">更新時間</span><span class="updsched">：盤後 07:20／17:40、盤中每 5 分</span></span>｜下次 ${esc(nextUpdate())}`;
+  renderPillSum();
   const lv = g.level.key === "green" ? "ok" : g.level.key === "yellow" ? "mid" : "bad";
   const lt = g.longterm.key === "normal" ? "ok" : g.longterm.key === "cautious" ? "mid" : "bad";
   const dtk = g.daytrade.key === "green" ? "ok" : g.daytrade.key === "yellow" ? "mid" : "bad";
@@ -816,6 +1116,8 @@ function renderOverview() {
   const r = S.rep, g = r.market.regime, m = r.market;
   $("#idxBig").textContent = fmt(g.close, 2);
   $("#idxBig").className = "idx-big " + cls(g.pct);
+  $("#idxCard").classList.toggle("up", g.pct > 0); $("#idxCard").classList.toggle("down", g.pct < 0);
+  renderGauge();
   $("#idxDelta").className = "delta " + cls(g.pct);
   const prev = g.close / (1 + g.pct / 100);
   $("#idxDelta").textContent = `${arrow(g.pct)} ${fmt(Math.abs(g.close - prev), 2)}（${pct(g.pct)}）`;
@@ -844,24 +1146,31 @@ function renderOverview() {
   orders.push({sev: go.length ? "green" : "amber", ic: "target", t: go.length ? `中長期可分批：${go.map(p => p.code + " " + p.name).join("、")}` : `中長期今日 0 檔可進場（觀察池 ${r.midterm.length} 檔）`, why: `大盤濾網：${g.longterm.label}（${g.longterm.why}）`, href: "#picks"});
   orders.push({sev: g.daytrade.key === "red" ? "red" : g.daytrade.key === "yellow" ? "amber" : "green", ic: "pulse", t: `當沖：${g.daytrade.label.replace(/^\S+\s/, "")}｜看盤中即時判斷`, why: g.daytrade.why.join("、") || "環境允許，仍須盤中站穩 VWAP 才進", href: "#daytrade"});
   if (r.value.length) orders.push({sev: "amber", ic: "target", t: `低估值觀察：${r.value.slice(0, 3).map(p => p.code + " " + p.name).join("、")}`, why: "等大盤站回月線再分批試單", href: "#picks"});
+  const showAll = S.ordersAll, extra = orders.length - 4;
+  if (!showAll && extra > 1) orders.splice(4);
   $("#orders").innerHTML = orders.map(o => `<li class="sev-${o.sev}${o.code || o.href ? " click" : ""}"${o.code ? ` data-code="${esc(o.code)}"` : o.href ? ` data-href="${o.href}"` : ""}><span class="ic">${icon(o.ic)}</span><div><b>${esc(plain(o.t))}</b><span class="why">${esc(plain(o.why))}</span></div></li>`).join("");
+  $("#orders").nextElementSibling?.classList.contains("showmore") && $("#orders").nextElementSibling.remove();
+  if (extra > 1) $("#orders").insertAdjacentHTML("afterend", `<div class="showmore"><button type="button" id="ordersMore">${showAll ? "收起" : `顯示其餘 ${extra} 項`}</button></div>`);
 
   $("#globalGrid").innerHTML = Object.values(r.global).map(x => { const c = x.name.includes("VIX") ? cls(-x.pct) : cls(x.pct);
     return `<div class="tk"><div class="n">${esc(x.name)}</div><div class="c">${fmt(x.close, x.close < 100 ? 2 : 0)} <small class="${c}">${pct(x.pct)}</small></div>${spark(x.spark, 140, 34)}</div>`; }).join("") || `<div class="empty">海外資料暫缺</div>`;
 
-  const sec = m.sectors.all || [...m.sectors.top, ...m.sectors.bottom];
+  const secAll = m.sectors.all || [...m.sectors.top, ...m.sectors.bottom];
+  const hk = S.heatKind || "up";
+  const sec = hk === "all" ? secAll : hk === "up" ? secAll.slice().sort((a, b) => b.pct - a.pct).slice(0, 10) : secAll.slice().sort((a, b) => a.pct - b.pct).slice(0, 10);
   const mx = Math.max(...sec.map(s => Math.abs(s.pct)), 1);
   $("#heat").innerHTML = sec.map(s => { const a = Math.round(10 + Math.abs(s.pct) / mx * 62); const base = s.pct >= 0 ? "var(--up)" : "var(--down)";
     const nm = s.name.replace("類指數", "");
     return `<div class="tile" data-ind="${esc(nm)}" style="background:color-mix(in srgb, ${base} ${a}%, var(--surface))${a > 45 ? ";color:#fff" : ""}"><span>${esc(nm)}</span><b>${pct(s.pct)}</b></div>`; }).join("");
-  $("#secSub").textContent = `${sec.length} 個類股｜中位數 ${pct(m.sectors.median)}`;
+  $("#secSub").textContent = `共 ${secAll.length} 類｜中位數 ${pct(m.sectors.median)}`;
   renderInst();
   $("#events").innerHTML = (r.events.length ? r.events : ["近兩週無已知重大事件"]).map(e => `<div class="row">${icon("cal")}<span>${esc(e)}</span></div>`).join("");
   const gs = m.gates;
   $("#gateSub").textContent = `分母 ${fmt(gs.total)} 檔｜通過 ${fmt(gs.passed)} 檔`;
   const gmax = Math.max(...gs.by_gate.map(x => x.count), 1);
   $("#gates").innerHTML = gs.by_gate.map(x => `<div class="hbar"><span>${esc(x.name)}</span><span class="t"><i style="width:${x.count / gmax * 100}%"></i></span><span class="v">${fmt(x.count)}</span></div>`).join("")
-    + `<p class="note" style="margin-bottom:0">處置股：${m.disposal.map(d => `<span class="click" data-code="${esc(d.code)}" style="text-decoration:underline dotted">${esc(d.code + " " + d.name)}</span>`).join("、") || "無"}</p>`;
+    + `<div class="showmore" style="justify-content:flex-start"><button type="button" id="dispBtn" aria-expanded="${!!S.dispOpen}"><span class="term" data-term="處置股" role="button" tabindex="0">處置股</span> ${m.disposal.length} 檔：${S.dispOpen ? "收起" : "點我看有哪些"}</button></div>`
+    + (S.dispOpen ? `<div class="chips" style="margin-top:10px">${m.disposal.map(d => `<button type="button" class="chip red click" data-code="${esc(d.code)}"><i class="sq"></i>${esc(d.code + " " + d.name)}</button>`).join("") || "無"}</div>` : "");
   drawIndex();
 }
 function renderInst() {
@@ -870,6 +1179,11 @@ function renderInst() {
   $("#inst").innerHTML = list.map(x => `<div class="drow" data-code="${esc(x.code)}"><span class="nm"><span class="mono">${esc(x.code)}</span>${esc(x.name)}</span><span class="t"><i style="width:${Math.abs(x.lots) / mx * 100}%;background:${x.lots > 0 ? "var(--up)" : "var(--down)"}"></i></span><span class="v ${cls(x.lots)}">${fmt(x.lots)}</span></div>`).join("");
 }
 seg($("#instSeg"), k => { S.instSide = k; renderInst(); });
+seg($("#heatSeg"), k => { S.heatKind = k; renderOverview(); });
+document.addEventListener("click", e => {
+  if (e.target.closest("#ordersMore")) { S.ordersAll = !S.ordersAll; renderOverview(); }
+  if (e.target.closest("#dispBtn") && !e.target.closest(".term")) { S.dispOpen = !S.dispOpen; renderOverview(); }
+});
 seg($("#idxSeg"), k => { S.idxN = +k; drawIndex(); });
 
 function maSeries(arr, n) { return arr.map((_, i) => i < n - 1 ? null : arr.slice(i - n + 1, i + 1).reduce((a, b) => a + b, 0) / n); }
@@ -930,8 +1244,15 @@ function renderPicks() {
         <div><span>法人買超</span><b>${fmt(p.insti)} 張</b></div><div><span>營收年增</span><b class="${cls(p.rev_yoy)}">${pct(p.rev_yoy, 1)}</b></div><div><span>停損 −7%</span><b class="down">${fmt(p.stop, 1)}</b></div></div>
       ${heldCodes().has(p.code) ? `<div class="callout amber">您已持有這檔：不加碼、不攤平，依持股紀律處理。</div>` : ""}${ribbon(positionHint(p.close))}</article>`).join("");
   $("#pickCards").innerHTML = html || `<div class="card empty">今日沒有合格標的。不硬湊，寧可空手。</div>`;
+  const list = {midterm: r.midterm.map(p => p.status), composite: r.composite.map(p => p.action)}[pickKind] || [];
+  const kinds = [...new Set(list.map(x => plain(x)))];
+  if (kinds.length > 1) {
+    $("#pickFilter").innerHTML = `<span class="filterhint">點狀態篩選：</span>` + kinds.map(k => `<button type="button" class="chip ${statusTone(list.find(x => plain(x) === k))}" data-pf="${esc(k)}" aria-pressed="${S.pickF === k}"><i class="sq"></i>${esc(k)}（${list.filter(x => plain(x) === k).length}）</button>`).join("");
+    if (S.pickF) $$("#pickCards .pick").forEach((c, i) => { c.hidden = plain(list[i]) !== S.pickF; });
+  } else $("#pickFilter").innerHTML = "";
 }
-seg($("#pickSeg"), k => { pickKind = k; renderPicks(); });
+seg($("#pickSeg"), k => { pickKind = k; S.pickF = null; renderPicks(); });
+$("#pickFilter").addEventListener("click", e => { const b = e.target.closest("[data-pf]"); if (!b) return; S.pickF = S.pickF === b.dataset.pf ? null : b.dataset.pf; renderPicks(); });
 
 function heldCodes() { return new Set((S.holdings || []).filter(h => h.shares > 0).map(h => h.stock_id)); }
 function priceOf(code) {
@@ -973,7 +1294,8 @@ function currentPortfolio() {
 const lightKey = l => l === "🔴" ? "red" : l === "🟡" ? "amber" : "green";
 function renderPortfolio() {
   if (!S.rep) return;
-  if (!S.holdings && S.needUnlock) { $("#pfBody").hidden = true; $("#pfLock").hidden = false; return; }
+  if (!S.holdings && S.needUnlock) { $("#pfBody").hidden = true; $("#pfLock").hidden = false; renderVaultOpen(); return; }
+  renderModeBar();
   $("#pfLock").hidden = true; $("#pfBody").hidden = false;
   const pf = currentPortfolio();
   if (!pf || !pf.rows.length) {
@@ -993,7 +1315,8 @@ function renderPortfolio() {
     </div>`;
   $("#pfSub").textContent = `${pf.rows.length} 檔｜點卡片看完整個股資訊`;
   const order = {"🔴": 0, "🟡": 1, "🟢": 2};
-  $("#hcards").innerHTML = pf.rows.slice().sort((a, b) => order[a.light] - order[b.light] || b.weight - a.weight).map(r => {
+  $$("#pfLegend [data-lf]").forEach(b => b.setAttribute("aria-pressed", String(S.pfF === b.dataset.lf)));
+  $("#hcards").innerHTML = pf.rows.slice().filter(r => !S.pfF || lightKey(r.light) === S.pfF).sort((a, b) => order[a.light] - order[b.light] || b.weight - a.weight).map(r => {
     const stopDist = r.stop && r.price ? (r.price / r.stop - 1) * 100 : null;
     return `<article class="card hcard l-${lightKey(r.light)}" data-code="${esc(r.code)}">
       <button class="editbtn" type="button" data-edit="${esc(r.code)}">編輯</button>
@@ -1026,7 +1349,78 @@ function drawPfChart() {
       generateLabels: c => c.data.labels.map((l, i) => ({text: `${l} ${(c.data.datasets[0].data[i] / pf.total * 100).toFixed(1)}%`, fillStyle: c.data.datasets[0].backgroundColor[i], strokeStyle: "transparent", fontColor: css("--muted"), index: i}))}}}}});
 }
 
-function saveLocal() { store.set("holdings", {holdings: S.holdings, cash: S.cash, history: S.priv?.history || [], saved: new Date().toISOString()}); }
+$("#pfLegend").addEventListener("click", e => { const b = e.target.closest("[data-lf]"); if (!b) return; S.pfF = S.pfF === b.dataset.lf ? null : b.dataset.lf; renderPortfolio(); });
+function saveLocal() {
+  if (S.mode === "vault") { saveVault(); return; }
+  store.set("holdings", {holdings: S.holdings, cash: S.cash, history: S.priv?.history || [], saved: new Date().toISOString()});
+}
+/* 持股本：每人自己的名字與密碼，加密後只存在這台裝置 */
+const vaults = () => store.get("vaults", {});
+async function saveVault() {
+  if (!S.vault) return;
+  const v = vaults(); v[S.vault.name] = await encryptObj(holdingsDoc(), S.vault.pw); store.set("vaults", v);
+}
+async function openVault(name, pw) {
+  const blob = vaults()[name]; if (!blob) throw new Error("找不到");
+  const d = await decryptBlob(blob, pw);
+  S.mode = "vault"; S.vault = {name, pw}; S.pw = null;
+  S.priv = {history: d.history || [], holdings_raw: d};
+  S.holdings = (d.holdings || []).map(h => ({...h})); S.cash = d.cash ?? null; S.needUnlock = false;
+  store.set("lastVault", name);
+  renderPortfolio(); renderOverview(); renderNews(); renderPicks();
+}
+function renderVaultOpen() {
+  const names = Object.keys(vaults()), last = store.get("lastVault");
+  $("#vaultOpen").innerHTML = names.length ? `<div class="form" style="grid-template-columns:1fr">
+      <label class="f">選擇持股本<select id="vSel">${names.map(n => `<option${n === last ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+      <label class="f">密碼<input id="vOpenPw" type="password" autocomplete="current-password"></label></div>
+      <div class="actions" style="margin-top:10px"><button class="btn primary" id="vOpen" type="button">開啟</button><span class="note" id="vOpenMsg"></span></div>`
+    : `<p class="note" style="margin:0">這台裝置還沒有持股本，按下面「建立新的持股本」開始。</p>`;
+}
+function logoutHoldings() {
+  S.holdings = null; S.priv = null; S.pw = null; S.vault = null; S.mode = null; S.needUnlock = true;
+  store.del("pw"); renderVaultOpen(); renderPortfolio(); renderOverview(); renderNews();
+}
+document.addEventListener("click", async e => {
+  if (e.target.closest("#vOpen")) {
+    try { await openVault($("#vSel").value, $("#vOpenPw").value); toast("已開啟持股本"); } catch { $("#vOpenMsg").textContent = "密碼不正確"; }
+  }
+  if (e.target.closest("#vCreate")) {
+    const name = $("#vName").value.trim(), pw = $("#vPw").value;
+    if (!name) { $("#vMsg").textContent = "請取一個名字"; return; }
+    if (pw.length < 6) { $("#vMsg").textContent = "密碼至少 6 個字"; return; }
+    if (pw !== $("#vPw2").value) { $("#vMsg").textContent = "兩次密碼不一樣"; return; }
+    if (vaults()[name]) { $("#vMsg").textContent = "這個名字已經有了"; return; }
+    const v = vaults(); v[name] = await encryptObj({holdings: [], cash: null, history: [], created: new Date().toISOString()}, pw); store.set("vaults", v);
+    await openVault(name, pw); toast(`已建立「${name}」的持股本`);
+  }
+  if (e.target.closest("#logoutBtn")) logoutHoldings();
+  if (e.target.closest("#vExport")) {
+    const blob = new Blob([JSON.stringify({kind: "台股作戰台持股本", name: S.vault.name, data: vaults()[S.vault.name]})], {type: "application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `持股本-${S.vault.name}.json`; document.body.append(a); a.click(); a.remove();
+    toast("已下載加密備份（沒有密碼打不開）");
+  }
+  if (e.target.closest("#vDelete")) {
+    if (e.target.closest("#vDelete").dataset.confirm !== "1") { e.target.closest("#vDelete").dataset.confirm = "1"; e.target.closest("#vDelete").textContent = "再按一次確認刪除"; return; }
+    const v = vaults(); delete v[S.vault.name]; store.set("vaults", v); toast("已刪除這台裝置上的持股本"); logoutHoldings();
+  }
+});
+$("#vImport").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const j = JSON.parse(await f.text()); if (!j.data?.ct || !j.name) throw 0;
+    const v = vaults(); let name = j.name; while (v[name]) name += "（匯入）";
+    v[name] = j.data; store.set("vaults", v); renderVaultOpen(); toast(`已匯入「${name}」，輸入密碼即可開啟`);
+  } catch { toast("這不是持股本備份檔"); }
+});
+function renderModeBar() {
+  if (!S.holdings) { $("#modeBar").hidden = true; return; }
+  $("#modeBar").hidden = false;
+  $("#modeBar").innerHTML = S.mode === "vault"
+    ? `${icon("book")}<div><b>${esc(S.vault.name)} 的持股本</b><div class="note">加密後只存在這台裝置，別人看不到。換手機前記得下載備份。</div></div><span class="spacer"></span><button class="btn" type="button" id="vExport">下載備份</button><button class="btn danger" type="button" id="vDelete">刪除</button><button class="btn" type="button" id="logoutBtn">登出／切換</button>`
+    : `${icon("wallet")}<div><b>站長的雲端持股</b><div class="note">每天自動分析；修改後按下方「同步到雲端」。</div></div><span class="spacer"></span><button class="btn" type="button" id="logoutBtn">登出／切換</button>`;
+  $("#syncBtn").hidden = S.mode === "vault";
+}
 function upsert(h, mode = "set") {
   S.holdings = S.holdings || [];
   const i = S.holdings.findIndex(x => x.stock_id === h.stock_id), cur = i >= 0 ? S.holdings[i] : null;
@@ -1046,7 +1440,7 @@ $("#hForm").addEventListener("submit", e => {
   const code = $("#hCode").value.trim(), n = v => v === "" ? null : Number(v);
   if (!/^\d{4,6}[A-Z]?$/.test(code)) { toast("代號格式不對"); return; }
   upsert({stock_id: code, stock_name: $("#hName").value.trim() || S.byCode[code]?.n || code, shares: n($("#hShares").value) || 0, buy_price: n($("#hCost").value), stop_loss: n($("#hStop").value), target_price: n($("#hTarget").value), hold_type: $("#hType").value, notes: $("#hNote").value});
-  saveLocal(); renderPortfolio(); renderOverview(); e.target.reset(); toast(`已更新 ${code}（存在這台裝置，記得同步到雲端）`);
+  saveLocal(); renderPortfolio(); renderOverview(); e.target.reset(); toast(S.mode === "vault" ? `已更新 ${code}（已加密存在這台裝置）` : `已更新 ${code}（記得按「同步到雲端」）`);
 });
 function editHolding(code) {
   const h = (S.holdings || []).find(x => x.stock_id === code); if (!h) return;
@@ -1104,7 +1498,7 @@ $("#parseBtn").addEventListener("click", () => showParsed(parseText($("#hText").
 $("#cancelBtn").addEventListener("click", () => { pending = []; $("#parsed").hidden = true; });
 $("#applyBtn").addEventListener("click", () => {
   pending.forEach(r => { const {mode, ...h} = r; if (!h.stock_name) h.stock_name = S.byCode[h.stock_id]?.n || h.stock_id; upsert(h, mode); });
-  saveLocal(); pending = []; $("#parsed").hidden = true; renderPortfolio(); renderOverview(); toast("已套用，記得按「同步到雲端」");
+  saveLocal(); pending = []; $("#parsed").hidden = true; renderPortfolio(); renderOverview(); toast(S.mode === "vault" ? "已套用，已加密存在這台裝置" : "已套用，記得按「同步到雲端」");
 });
 async function readShot(file) {
   const msg = $("#shotMsg");
@@ -1164,6 +1558,8 @@ function renderScreener() {
   let rows = S.stocks.filter(r => {
     if (q && !(r.c.startsWith(q) || r.n.includes(q))) return false;
     if (ind && r.i !== ind) return false;
+    const mk = $("#mktSel").value;
+    if (mk && (mk === "E" ? !r.e : r.m !== mk || r.e)) return false;
     if (scrFilter === "pass") return !r.g.length;
     if (scrFilter === "hi") return (r.sc ?? 0) >= 70;
     if (scrFilter === "rev") return (r.yoy ?? -1) >= 20;
@@ -1175,9 +1571,9 @@ function renderScreener() {
   rows.sort((a, b) => { const x = a[k], y = b[k]; if (x == null) return 1; if (y == null) return -1; return (x > y ? 1 : x < y ? -1 : 0) * dir; });
   $("#scrCount").textContent = `共 ${fmt(rows.length)} 檔，顯示前 ${fmt(Math.min(scrLimit, rows.length))} 檔｜點任一列看個股`;
   $("#moreBtn").hidden = rows.length <= scrLimit;
-  $("#scrSub").textContent = `上市＋上櫃普通股｜${S.rep.basis} 收盤`;
+  $("#scrSub").textContent = `上市、上櫃、興櫃與 ETF 共 ${fmt(S.stocks.length)} 檔｜${S.rep.basis} 收盤`;
   $("#scrTable").innerHTML = `<thead><tr>${SCR_COLS.map(([key, lab, al]) => `<th class="sort ${al || ""}" data-k="${key}"${scrSort.k === key ? ` aria-sort="${dir > 0 ? "ascending" : "descending"}"` : ""}>${lab}</th>`).join("")}</tr></thead><tbody>${
-    rows.slice(0, scrLimit).map(r => `<tr class="click" data-code="${esc(r.c)}"><td class="l mono">${esc(r.c)}</td><td class="l">${esc(r.n)}${r.m === "櫃" ? " <span class='chip'>櫃</span>" : ""}</td><td class="l muted">${esc(r.i)}</td>
+    rows.slice(0, scrLimit).map(r => `<tr class="click" data-code="${esc(r.c)}"><td class="l mono">${esc(r.c)}</td><td class="l">${esc(r.n)}${r.e ? " <span class='chip blue'>ETF</span>" : r.m === "櫃" ? " <span class='chip'>櫃</span>" : r.m === "興" ? " <span class='chip amber'>興櫃</span>" : ""}</td><td class="l muted">${esc(r.i)}</td>
       <td class="num">${fmt(r.p, pxd(r.p))}</td><td class="num ${cls(r.chg)}">${pct(r.chg)}</td><td class="num">${fmt(r.amt, 1)}</td><td class="num ${cls(r.ins)}">${fmt(r.ins)}</td>
       <td class="num">${r.sc != null ? `<b style="color:${r.sc >= 70 ? "var(--accent)" : "inherit"}">${r.sc}</b>` : "—"}</td><td class="num">${r.rs ?? "—"}</td><td class="num ${cls(r.yoy)}">${r.yoy != null ? fmt(r.yoy, 1) : "—"}</td>
       <td class="num">${fmt(r.pe, 1)}</td><td class="num">${fmt(r.y, 2)}</td><td class="num">${r.rsi ?? "—"}</td><td class="l">${r.g.map(x => chip(x, "red")).join(" ")}</td></tr>`).join("")}</tbody>`;
@@ -1185,6 +1581,7 @@ function renderScreener() {
 $("#scrTable").addEventListener("click", e => { const th = e.target.closest("th[data-k]"); if (!th) return; const k = th.dataset.k; scrSort = {k, dir: scrSort.k === k ? -scrSort.dir : -1}; renderScreener(); });
 $("#q").addEventListener("input", () => { scrLimit = 150; renderScreener(); });
 $("#indSel").addEventListener("change", () => { scrLimit = 150; renderScreener(); });
+$("#mktSel").addEventListener("change", () => { scrLimit = 150; renderScreener(); });
 $("#moreBtn").addEventListener("click", () => { scrLimit += 150; renderScreener(); });
 seg($("#scrSeg"), k => { scrFilter = k; scrLimit = 150; renderScreener(); });
 
@@ -1367,31 +1764,37 @@ function clockFace(hhmm) {
     <line x1="50" y1="50" x2="${mx.toFixed(2)}" y2="${my.toFixed(2)}" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/>
     <circle cx="50" cy="50" r="3.2" fill="var(--surface-solid)" stroke="var(--ink)" stroke-width="1.8"/></svg>`;
 }
+$("#dtCounts").addEventListener("click", e => { const b = e.target.closest("[data-df]"); if (!b) return; S.dtF = S.dtF === b.dataset.df ? null : b.dataset.df; renderDaytrade(); });
 function renderDaytrade() {
   if (!S.rep) return;
   const m = liveDaytrade(), v = m.verdict || S.rep.daytrade.verdict;
   const ph = m.phase, hhmm = (m.updated || "").slice(11, 16);
   $("#dtPhase").innerHTML = `<div class="phase"><div class="clockwrap">${clockFace(hhmm)}<div class="digital">${esc(hhmm || "--:--")}<small>${m.replay ? "回放時間" : "最後更新"}</small></div></div><div><b>${esc(ph.label)}｜大盤${esc(plain(v.label))}</b><span class="note">${esc(ph.note)}</span></div></div>`;
   const c = m.counts;
-  $("#dtCounts").innerHTML = `<div><b class="down">${c.go}</b><span>可進</span></div><div><b style="color:var(--warn)">${c.watch}</b><span>觀察</span></div><div><b class="up">${c.no}</b><span>不適合</span></div>`;
-  $("#dtNote").textContent = `觀察 ${m.items.length} 檔（主要候選＋觀察名單）。點卡片看 K 線與完整資訊。`;
+  $("#dtCounts").innerHTML = [["go", c.go, "可進", "var(--down)"], ["watch", c.watch, "觀察", "var(--warn)"], ["no", c.no, "不適合", "var(--up)"]].map(([k, n, l, col]) => `<button type="button" data-df="${k}" aria-pressed="${S.dtF === k}" style="color:${col}"><b>${n}</b><span>${l}</span></button>`).join("");
+
   const red = v.key === "red";
   $("#dtBanner").hidden = !(red || v.key === "yellow");
   $("#dtBanner").className = "callout " + (red ? "red" : "amber");
   $("#dtBanner").innerHTML = red ? `<b>今日大盤停做</b>（${esc((v.why || []).join("、"))}）：下方判斷只供觀察與練習，不建議實際進場。` : `<b>今日大盤減量</b>：只做最乾淨的一檔、部位減半。`;
-  $("#dtCards").innerHTML = m.items.map(i => dtCard(i)).join("") || `<div class="card empty">今日沒有當沖候選。</div>`;
+  const shown = m.items.filter(i => !S.dtF || i.status === S.dtF);
+  $("#dtNote").textContent = S.dtF ? `只顯示「${{go: "可進", watch: "觀察", no: "不適合"}[S.dtF]}」${shown.length} 檔，再點一次取消篩選。` : `觀察 ${m.items.length} 檔（主要候選＋觀察名單）。點上面的數字可以篩選，點卡片看 K 線。`;
+  $("#dtCards").innerHTML = shown.map(i => dtCard(i)).join("") || `<div class="card empty">${S.dtF ? "目前沒有這個狀態的標的。" : "今日沒有當沖候選。"}</div>`;
   $("#dtRules").innerHTML = (m.rules || S.rep.daytrade.rules || []).map(x => `<li>${esc(x)}</li>`).join("");
 }
 
 let newsCat = "全部";
 function renderNews() {
-  const items = S.rep.news || [], cats = ["全部", ...new Set(items.map(n => n.cat))], held = heldCodes();
+  const items = (S.live?.news?.length ? S.live.news : S.rep.news) || [], cats = ["全部", ...new Set(items.map(n => n.cat))], held = heldCodes();
   $("#newsSeg").innerHTML = cats.concat(held.size ? ["我的持股"] : []).map(c => `<button type="button" data-k="${esc(c)}" aria-pressed="${c === newsCat}">${esc(c)}</button>`).join("");
   const list = items.filter(n => newsCat === "全部" || n.cat === newsCat || (newsCat === "我的持股" && n.stocks.some(s => held.has(s.code))));
+  const total = list.length; if (!S.newsAll) list.splice(30);
   $("#newsList").innerHTML = list.map(n => `<article><div class="tm"><b>${esc(n.time.slice(11, 16))}</b>${esc(n.time.slice(5, 10).replace("-", "/"))}</div><div><a class="t" href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
-    ${n.summary ? `<p>${esc(n.summary)}</p>` : ""}<div class="chips">${chip(n.cat, "")}${n.stocks.filter(s => /^\d{4}$/.test(s.code)).map(s => `<span class="chip ${held.has(s.code) ? "gold" : "blue"} click" data-code="${esc(s.code)}">${esc(s.code)} ${esc(s.name)}</span>`).join("")}</div></div></article>`).join("") || `<div class="empty">沒有新聞</div>`;
+    ${n.summary ? `<p>${esc(n.summary)}</p>` : ""}<div class="chips">${chip(n.cat, n.cat === "重大訊息" ? "amber" : "")}${n.src ? `<span class="chip">${esc(n.src)}</span>` : ""}${n.stocks.filter(s => /^\d{4}$/.test(s.code)).map(s => `<span class="chip ${held.has(s.code) ? "gold" : "blue"} click" data-code="${esc(s.code)}">${esc(s.code)} ${esc(s.name)}</span>`).join("")}</div></div></article>`).join("") || `<div class="empty">沒有新聞</div>`;
+  if (total > 30) $("#newsList").insertAdjacentHTML("beforeend", `<div class="showmore"><button type="button" id="newsMore">${S.newsAll ? "收起" : `顯示其餘 ${total - 30} 則`}</button></div>`);
 }
-seg($("#newsSeg"), k => { newsCat = k; renderNews(); });
+seg($("#newsSeg"), k => { newsCat = k; S.newsAll = false; renderNews(); });
+document.addEventListener("click", e => { if (e.target.closest("#newsMore")) { S.newsAll = !S.newsAll; renderNews(); } });
 
 function renderBacktest() {
   if (!S.rep) return;
@@ -1422,11 +1825,7 @@ function renderSetup() {
 }
 $("#saveCfg").addEventListener("click", () => { store.set("gh", {repo: $("#ghRepo").value.trim(), token: $("#ghToken").value.trim(), pw: $("#ghPw").value}); toast("已存在這台裝置"); });
 $("#clearCfg").addEventListener("click", () => { store.del("gh"); renderSetup(); toast("已清除"); });
-async function renderLine() {
-  try { const msgs = await getJSON("data/line_preview.json");
-    $("#linePrev").innerHTML = msgs.map(m => `<pre class="callout" style="white-space:pre-wrap;margin:0;font-family:var(--f-body);font-size:.82rem;background:var(--surface-2)">${esc(m.text)}</pre>`).join("");
-  } catch { $("#linePrev").innerHTML = `<div class="empty">尚無預覽</div>`; }
-}
+
 
 async function pollLive() {
   try {
@@ -1437,11 +1836,11 @@ async function pollLive() {
     const fresh = open && (Date.now() - new Date(l.updated).getTime()) < 20 * 60 * 1000;
     $("#liveStamp").classList.toggle("on", fresh);
     $("#liveStamp").textContent = fresh ? "盤中即時 " + l.updated.slice(11, 16) : (l.daytrade?.phase?.label || "報價") + " " + l.updated.slice(11, 16);
-    if (!S.live || l.updated !== S.live.updated) { S.live = l; renderPortfolio(); renderDaytrade(); }
+    if (!S.live || l.updated !== S.live.updated) { S.live = l; renderPortfolio(); renderDaytrade(); renderNews(); }
   } catch {}
 }
 
-async function unlock(pw) { S.priv = await decryptBlob(await getJSON("data/private.enc.json"), pw); S.pw = pw; applyPrivate(); S.live = null; pollLive(); }
+async function unlock(pw) { S.priv = await decryptBlob(await getJSON("data/private.enc.json"), pw); S.pw = pw; S.mode = "owner"; S.vault = null; applyPrivate(); S.live = null; pollLive(); }
 function applyPrivate() {
   const local = store.get("holdings"), srvDate = S.priv?.holdings_raw?.last_updated || "";
   if (local && local.saved && local.saved.slice(0, 10) >= srvDate) { S.holdings = local.holdings; S.cash = local.cash; if (local.history?.length) S.priv.history = local.history; }
@@ -1462,13 +1861,15 @@ async function boot() {
   const inds = [...new Set(S.stocks.map(r => r.i).filter(Boolean))].sort();
   $("#indSel").insertAdjacentHTML("beforeend", inds.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join(""));
   renderTop();
-  try { S.priv = await getJSON("data/private.json"); applyPrivate(); }
+  try { S.priv = await getJSON("data/private.json"); S.mode = "owner"; applyPrivate(); }
   catch {
     const pw = store.get("pw") || store.get("gh", {}).pw;
     try { if (pw) await unlock(pw); else throw 0; }
-    catch { S.needUnlock = true; const lh = store.get("holdings"); if (lh) { S.holdings = lh.holdings; S.cash = lh.cash; S.needUnlock = false; } }
+    catch { S.needUnlock = true; }
   }
-  renderOverview(); renderPicks(); renderDaytrade(); renderPortfolio(); renderNews(); renderBacktest(); renderSetup(); renderLine(); route();
+  renderOverview(); renderPicks(); renderDaytrade(); renderPortfolio(); renderNews(); renderBacktest(); renderSetup(); renderDict(); route();
+  linkTerms(document.body); setupCollapsibles(); observeEnhance();
+  setInterval(() => { if (S.rep) renderTop(); }, 60000);
   pollLive(); setInterval(pollLive, 60000);
 }
 boot();

@@ -2,8 +2,6 @@
 
 用法：
   python -m engine.run_daily            # 產生網站資料（site/data/）
-  python -m engine.run_daily --push     # 另外推播 LINE（交易日、且今天還沒推過才推）
-  python -m engine.run_daily --dry-run  # 只印出 LINE 內容
 """
 from __future__ import annotations
 
@@ -15,7 +13,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from . import details, line, scorecard, sources as src, strategy as stg
+from . import details, scorecard, sources as src, strategy as stg
 from .crypto import decrypt, encrypt
 from .indicators import analyze
 from .net import FetchError, clear_cache_older_than
@@ -85,23 +83,6 @@ def load_holdings() -> dict:
     return {"holdings": [], "history": []}
 
 
-def holidays() -> set[dt.date]:
-    try:
-        j = src.get_json("https://openapi.twse.com.tw/v1/holidaySchedule/holidaySchedule", cache=False)
-        out = set()
-        for r in j:
-            name = r.get("Name", "")
-            if "開始交易" in name or "最後交易" in name:
-                continue
-            try:
-                out.add(src.roc_to_date(r["Date"]))
-            except Exception:  # noqa: BLE001
-                pass
-        return out
-    except Exception:  # noqa: BLE001
-        return set()
-
-
 def build(now: dt.datetime) -> dict:
     today = now.date()
     # ── 1. 交易日與大盤（官方 FMTQIK）
@@ -158,15 +139,16 @@ def build(now: dt.datetime) -> dict:
     if night is None and night_d != basis:
         night = try_("台指夜盤", lambda: src.taifex_night(basis))
     glob = try_("海外市場", src.global_markets, grade="🟡B", fallback={}) or {}
-    news = try_("財經新聞", src.news, grade="🟡B", fallback=[]) or []
     twii = try_("加權 200 日線", lambda: src.yahoo_chart("^TWII", "2y", cache=False), grade="🟡B")
 
     # ── 5. 組合個股宇宙（上市＋上櫃普通股）
     stocks: dict[str, dict] = {}
     for code, q in list(mi["stocks"].items()) + list(tq.items()):
-        if not src.is_common_stock(code) or not q.get("close") or not q.get("volume"):
+        is_etf = code.startswith("00") and 4 <= len(code) <= 6
+        if not (src.is_common_stock(code) or is_etf) or not q.get("close") or not q.get("volume"):
             continue
         s = dict(q)
+        s["etf"] = is_etf
         prevc = s["close"] - (s.get("change") or 0)
         s["pct"] = round((s["close"] / prevc - 1) * 100, 2) if prevc else None
         if s["market"] == "上市":
@@ -202,9 +184,19 @@ def build(now: dt.datetime) -> dict:
         if r:
             s["rev_yoy"], s["rev_ytd"], s["rev_mom"], s["rev_ym"] = r["yoy"], r["ytd_yoy"], r["mom"], r["ym"]
         stocks[code] = s
-    log(f"宇宙 {len(stocks)} 檔（上市 {sum(1 for s in stocks.values() if s['market']=='上市')}）")
+    # 興櫃：只有基本報價（不做技術分析），讓「查個股」找得到
+    for code, e in emg.items():
+        if code not in stocks and src.is_common_stock(code) and e.get("close"):
+            stocks[code] = {**e, "pct": round((e["close"] / e["prev_avg"] - 1) * 100, 2) if e.get("prev_avg") else None,
+                            "gates": [], "insti_hist": [], "industry": None}
+    log(f"宇宙 {len(stocks)} 檔（上市 {sum(1 for s in stocks.values() if s['market']=='上市')}，"
+        f"ETF {sum(1 for s in stocks.values() if s.get('etf'))}，興櫃 {sum(1 for s in stocks.values() if s['market']=='興櫃')}）")
+    name_map = {s["name"].replace("*", "").replace("-KY", ""): c for c, s in stocks.items()
+                if len(s["name"]) >= 2 and s["market"] != "興櫃" and not s.get("etf")}
+    news = try_("財經新聞", lambda: src.news(name_map=name_map), grade="🟡B", fallback=[]) or []
 
-    gate_stats = stg.apply_gates(stocks, disposal)
+    gate_stats = stg.apply_gates({c: s for c, s in stocks.items() if not s.get("etf") and s["market"] != "興櫃"}, disposal)
+    stg.apply_gates({c: s for c, s in stocks.items() if s.get("etf")}, disposal)   # ETF 也標門檻，但不算進統計
 
     # ── 6. 持股
     hold = load_holdings()
@@ -222,7 +214,7 @@ def build(now: dt.datetime) -> dict:
             stocks[c] = {**q, "gates": [], "insti_hist": [], "_held_only": True}
 
     # ── 7. 技術面（Yahoo 1 年日K，🟡B；最後收盤與官方比對）
-    need = {c for c, s in stocks.items() if (s.get("amount") or 0) >= 3e8} | {h.get("stock_id") for h in hlist}
+    need = {c for c, s in stocks.items() if s["market"] != "興櫃"} | {h.get("stock_id") for h in hlist}
     log(f"抓技術面 {len(need)} 檔")
     mism = 0
     for c in sorted(need):
@@ -291,7 +283,7 @@ def build(now: dt.datetime) -> dict:
         if not s.get("_bars"):
             continue
         d = details.build(s, regime, basis)
-        if not s.get("_held_only") and ((s.get("amount") or 0) >= 3e8 or c in featured):
+        if not s.get("_held_only") and (s["market"] != "興櫃" or c in featured):
             pub_details[c] = d
         elif c in held:          # 只因為持有才有的標的 → 放進加密檔，避免外洩持股
             priv_details[c] = d
@@ -320,8 +312,8 @@ def build(now: dt.datetime) -> dict:
     ins_tot = {"foreign": sum(v["foreign"] for k, v in t_b.items() if src.is_common_stock(k)),
                "trust": sum(v["trust"] for k, v in t_b.items() if src.is_common_stock(k)),
                "total": sum(v["total"] for k, v in t_b.items() if src.is_common_stock(k))} if t_b else None
-    top_buy = sorted((s for s in stocks.values() if s.get("insti")), key=lambda s: -s["insti"])[:8]
-    top_sell = sorted((s for s in stocks.values() if s.get("insti")), key=lambda s: s["insti"])[:8]
+    top_buy = sorted((s for s in stocks.values() if s.get("insti") and not s.get("etf")), key=lambda s: -s["insti"])[:8]
+    top_sell = sorted((s for s in stocks.values() if s.get("insti") and not s.get("etf")), key=lambda s: s["insti"])[:8]
     margin_chg_e = None
     if mg:
         x = mg["summary"].get("融資金額(仟元)")
@@ -336,7 +328,8 @@ def build(now: dt.datetime) -> dict:
         if s.get("_held_only"):      # 只因持有才加入的標的（興櫃、ETF）不放進公開總表
             continue
         t = s.get("tech") or {}
-        table.append({"c": s["code"], "n": s["name"], "m": {"上市": "市", "上櫃": "櫃", "興櫃": "興"}.get(s["market"], "市"), "i": stg.INDUSTRY.get(s.get("industry"), ""),
+        table.append({"c": s["code"], "n": s["name"], "m": {"上市": "市", "上櫃": "櫃", "興櫃": "興"}.get(s["market"], "市"),
+                      "e": 1 if s.get("etf") else 0, "i": "ETF" if s.get("etf") else stg.INDUSTRY.get(s.get("industry"), ""),
                       "p": s["close"], "chg": s.get("pct"), "amt": round((s.get("amount") or 0) / 1e8, 2),
                       "ins": round((s.get("insti") or 0) / 1000), "sc": s.get("score"), "rs": s.get("rs"),
                       "pe": s.get("pe"), "y": s.get("yield"), "yoy": round(s["rev_yoy"], 1) if s.get("rev_yoy") is not None else None,
@@ -354,7 +347,7 @@ def build(now: dt.datetime) -> dict:
                    "margin_chg_e": margin_chg_e, "daytrade_market_pct": (dtr or {}).get("market_pct"),
                    "night": night, "taifex": oi, "gates": gate_stats,
                    "disposal": [{"code": k, **v} for k, v in disposal.items() if src.is_common_stock(k)]},
-        "global": glob, "news": news[:30], "events": events,
+        "global": glob, "news": news[:120], "events": events,
         "breaker": brk, "midterm": mid, "composite": cmp_, "daytrade": dtp, "value": vp,
         "stats": {"中長期": st_mid, "綜合評分": st_cmp, "當沖": st_dt,
                   "monthly": scorecard.monthly(sel, "中長期"), "scored_today": {"selection": n1, "daytrade": n2}},
@@ -388,44 +381,11 @@ def write(rep: dict, pf: dict | None, hold: dict) -> None:
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--push", action="store_true")
-    ap.add_argument("--dry-run", action="store_true")
-    a = ap.parse_args()
+    argparse.ArgumentParser(description="產生每日網站資料").parse_args()
     now = dt.datetime.now(TW)
     clear_cache_older_than(10)
     rep, pf, hold = build(now)
     write(rep, pf, hold)
-    full = dict(rep, portfolio=pf)
-    url = os.environ.get("SITE_URL") or "https://kuochiawang0226-bot.github.io/-/"
-    msgs = line.build(full, url)
-    # 網站上的預覽：有密碼（公開網站）時不放持股內容
-    preview = line.build(full, url, include_holdings=not os.environ.get("STOCK_PASSWORD"))
-    (ROOT / "site" / "data" / "line_preview.json").write_text(json.dumps(preview, ensure_ascii=False, indent=1),
-                                                             encoding="utf-8")
-    if a.dry_run:
-        for m in msgs:
-            print(m["text"], "\n" + "─" * 30)
-    if a.push:
-        today = now.date()
-        state_p = ROOT / "data" / "line_state.json"
-        state = json.loads(state_p.read_text()) if state_p.exists() else {}
-        if today.weekday() >= 5 or today in holidays():
-            log("非交易日，不推播")
-        elif state.get("last_push") == today.isoformat():
-            log("今天已推播過，略過")
-        elif rep["report_date"] != today.isoformat():
-            log("報告日不是今天（可能是盤後執行），不推播")
-        else:
-            ok, info = line.push(msgs)
-            log(f"LINE 推播 {'成功' if ok else '失敗'}：{info}")
-            if ok:
-                state["last_push"] = today.isoformat()
-                state_p.write_text(json.dumps(state))
-            elif info.startswith("未設定"):
-                log("尚未設定 LINE 金鑰，略過推播；網站資料照常更新")
-            else:
-                sys.exit(2)
     log("完成")
 
 

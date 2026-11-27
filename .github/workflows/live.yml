@@ -1,10 +1,10 @@
-# 盤中（台灣 09:00~13:30）每 10 分鐘：更新報價與當沖即時判斷，只更新網站，不推 LINE。
-# 不寫回存放庫（避免大量提交）；還沒開 GitHub Pages 時部署步驟會略過不算失敗。
+# 盤中（台灣 09:00~13:30）每 5 分鐘：更新報價、當沖即時判斷與新聞，只更新網站。
+# 不寫回存放庫（避免大量提交）。GitHub 排程最快 5 分鐘一次，尖峰時可能延遲幾分鐘。
 name: live
 
 on:
   schedule:
-    - cron: "*/10 1-5 * * 1-5"
+    - cron: "*/5 1-5 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -25,11 +25,17 @@ jobs:
       STOCK_PASSWORD: ${{ secrets.STOCK_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+      - name: 取得個股詳細檔（data 分支）
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: data
+          path: databranch
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: 盤中報價＋當沖即時判斷
+      - name: 盤中報價＋當沖即時判斷＋新聞
         run: python -m engine.run_live
       - run: python -m engine.build_site
       - uses: actions/upload-pages-artifact@v3

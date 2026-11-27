@@ -417,32 +417,112 @@ def global_markets() -> dict:
 
 
 # ───────────────────────── 新聞（鉅亨網 🟡B）─────────────────────────
+TWZ = dt.timezone(dt.timedelta(hours=8))
 NEWS_CATS = {"tw_stock": "台股", "wd_stock": "國際股", "headline": "頭條", "tw_macro": "台灣總經"}
+RSS_FEEDS = [
+    ("Google 新聞", "台股", "https://news.google.com/rss/search?q=%E5%8F%B0%E8%82%A1&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"),
+    ("Google 新聞", "國際股", "https://news.google.com/rss/search?q=%E7%BE%8E%E8%82%A1+%E8%B2%BB%E5%8D%8A&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"),
+    ("Yahoo 股市", "台股", "https://tw.stock.yahoo.com/rss?category=tw-market"),
+    ("經濟日報", "台股", "https://money.udn.com/rssfeed/news/1001/5590?ch=money"),
+]
 
 
-def news(limit: int = 15) -> list[dict]:
+def _rss_items(xml: str) -> list[dict]:
+    out = []
+    for it in re.findall(r"<item>(.*?)</item>", xml, re.S):
+        def tag(t):
+            m = re.search(rf"<{t}[^>]*>(.*?)</{t}>", it, re.S)
+            if not m:
+                return ""
+            v = re.sub(r"^<!\[CDATA\[|\]\]>$", "", m.group(1).strip())
+            return _html.unescape(re.sub(r"<[^>]+>", "", v)).strip()
+        out.append({"title": tag("title"), "link": tag("link"), "date": tag("pubDate"), "source": tag("source"),
+                    "desc": tag("description")})
+    return out
+
+
+def _news_time(s: str) -> str:
+    from email.utils import parsedate_to_datetime
+    try:
+        return parsedate_to_datetime(s).astimezone(TWZ).isoformat(timespec="minutes")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _tag_stocks(text: str, name_map: dict | None) -> list[dict]:
+    """從標題找出提到的個股（名稱或 4 碼代號）。"""
+    if not name_map:
+        return []
+    found = []
+    for code in re.findall(r"(?<!\d)(\d{4})(?!\d)", text):
+        if code in name_map.values() and code not in [f["code"] for f in found]:
+            found.append({"code": code, "name": next(n for n, c in name_map.items() if c == code)})
+    for name, code in name_map.items():
+        if len(found) >= 6:
+            break
+        if name in text and code not in [f["code"] for f in found]:
+            found.append({"code": code, "name": name})
+    return found[:6]
+
+
+def news(limit: int = 15, name_map: dict | None = None) -> list[dict]:
+    """多來源財經新聞：鉅亨網、Google 新聞（彙整工商、經濟、自由、中央社等）、Yahoo 股市、經濟日報、公司重大訊息。"""
     items, seen = [], set()
+
+    def add(it):
+        key = re.sub(r"[\s\W]", "", it["title"])[:24]
+        if not it["title"] or key in seen:
+            return
+        seen.add(key)
+        items.append(it)
+
     for cat, label in NEWS_CATS.items():
         try:
             j = get_json(f"https://api.cnyes.com/media/api/v1/newslist/category/{cat}?limit={limit}", cache=False)
         except FetchError:
             continue
         for it in j.get("items", {}).get("data", []):
-            nid = it.get("newsId")
-            if nid in seen:
+            stocks = [{"code": str(m["code"]), "name": m.get("name", "")} for m in (it.get("market") or [])
+                      if isinstance(m, dict) and m.get("code")]
+            add({"id": it.get("newsId"), "cat": label, "src": "鉅亨網", "title": _html.unescape(it.get("title", "")),
+                 "summary": _html.unescape(re.sub(r"<[^>]+>", "", it.get("summary") or ""))[:160],
+                 "time": dt.datetime.fromtimestamp(int(it.get("publishAt", 0)), TWZ).isoformat(timespec="minutes"),
+                 "url": f"https://news.cnyes.com/news/id/{it.get('newsId')}", "stocks": stocks[:6]})
+
+    for src_name, label, url in RSS_FEEDS:
+        try:
+            xml = get(url, cache=False, retries=2)
+        except FetchError:
+            continue
+        for r in _rss_items(xml)[:limit]:
+            title, source = r["title"], r["source"] or src_name
+            if src_name == "Google 新聞" and " - " in title:
+                title, source = title.rsplit(" - ", 1)[0], r["source"] or title.rsplit(" - ", 1)[1]
+            if not r["link"].startswith("https://") or any(x in source for x in ("Facebook", "YouTube", "Instagram", "Threads", "PTT")):
                 continue
-            seen.add(nid)
-            stocks = []
-            for m in it.get("market") or []:
-                if isinstance(m, dict) and m.get("code"):
-                    stocks.append({"code": str(m["code"]), "name": m.get("name", "")})
-            items.append({
-                "id": nid, "cat": label, "title": _html.unescape(it.get("title", "")),
-                "summary": _html.unescape(re.sub(r"<[^>]+>", "", it.get("summary") or ""))[:160],
-                "time": dt.datetime.fromtimestamp(int(it.get("publishAt", 0))).isoformat(timespec="minutes"),
-                "url": f"https://news.cnyes.com/news/id/{nid}", "stocks": stocks[:6],
-                "keywords": (it.get("keyword") or [])[:5] if isinstance(it.get("keyword"), list) else [],
-            })
+            add({"id": r["link"], "cat": label, "src": source, "title": title, "summary": r["desc"][:160] if src_name != "Google 新聞" else "",
+                 "time": _news_time(r["date"]), "url": r["link"], "stocks": _tag_stocks(title, name_map)})
+
+    # 公司重大訊息（官方）
+    for url, code_k, name_k in ((f"{OAPI}/opendata/t187ap04_L", "公司代號", "公司名稱"),
+                                (f"{TPEX}/mopsfin_t187ap04_O", "SecuritiesCompanyCode", "CompanyName")):
+        try:
+            j = get_json(url, cache=False, retries=2, timeout=60)
+        except FetchError:
+            continue
+        for r in j[:60]:
+            k = {kk.strip(): v for kk, v in r.items()}
+            code, name = str(k.get(code_k, "")).strip(), str(k.get(name_k, "")).strip()
+            subj = re.sub(r"\s+", "", str(k.get("主旨", "")))[:90]
+            d, t = str(k.get("發言日期", "")), str(k.get("發言時間", "")).zfill(6)
+            try:
+                ts = dt.datetime.combine(roc_to_date(d), dt.time(int(t[:2]), int(t[2:4]))).replace(tzinfo=TWZ).isoformat(timespec="minutes")
+            except Exception:  # noqa: BLE001
+                ts = ""
+            add({"id": f"ann-{code}-{d}-{t}-{subj[:10]}", "cat": "重大訊息", "src": "公開資訊觀測站", "title": f"{name}：{subj}",
+                 "summary": re.sub(r"\s+", " ", str(k.get("說明", "")))[:160], "time": ts,
+                 "url": f"https://mops.twse.com.tw/mops/#/web/t05sr01_1", "stocks": [{"code": code, "name": name}] if code else []})
+
     items.sort(key=lambda x: x["time"], reverse=True)
     return items
 

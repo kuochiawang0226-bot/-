@@ -14,3 +14,5 @@ site/_preview.html
 run.log
 line_out.txt
 site/data/live_private.json
+site/data/stock/
+databranch/
