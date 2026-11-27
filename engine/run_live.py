@@ -44,8 +44,8 @@ def main():
     # ── 非交易時段（週末、盤前盤後）只更新新聞，報價與當沖判斷沿用最後一次
     old_p = SITE / "live.json"
     old = json.loads(old_p.read_text(encoding="utf-8")) if old_p.exists() else {}
-    session = now.weekday() < 5 and dt.time(8, 55) <= now.time() <= dt.time(13, 45)
-    news_only = not session and not a.asof and bool(old)
+    # 週末與平日開盤前：只更新新聞；平日收盤後照常抓一次，拿到今天的收盤價
+    news_only = (now.weekday() >= 5 or now.time() < dt.time(8, 55)) and not a.asof and bool(old)
 
     # ── 一般報價（各名單＋成交金額前 30；持股不放進公開檔，持股報價由各人瀏覽器自己抓）
     codes: dict[str, str] = {}
@@ -71,7 +71,15 @@ def main():
     for sym, name in (() if news_only else (("^TWII", "加權指數"),)):
         try:
             y = src.yahoo_chart(sym, "1d", "5m", cache=False)
-            idx[sym] = {"name": name, "price": y["price"], "prev": y["prev_close"],
+            # Yahoo 加權指數的 meta 現價／昨收常常錯：現價用最後一根 K，昨收用官方（每日分析的收盤）
+            g = (rep.get("market") or {}).get("regime") or {}
+            prev = g.get("close") if rep.get("basis", "") < now.date().isoformat() and g.get("close") else y["prev_close"]
+            j = src.get_json("https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?range=1d&interval=5m", cache=False)
+            r0 = j["chart"]["result"][0]
+            pts = [(dt.datetime.fromtimestamp(ts, TW).time(), c) for ts, c in zip(r0.get("timestamp") or [], r0["indicators"]["quote"][0]["close"]) if c]
+            pts = [x for x in pts if x[0] <= dt.time(13, 30)] or pts          # 13:30 之後那根常是錯的
+            last = pts[-1][1] if pts else y["price"]
+            idx[sym] = {"name": name, "price": round(last, 2), "prev": prev,
                         "time": y["time"].strftime("%H:%M"), "intraday": [round(b["close"], 2) for b in y["bars"]]}
         except Exception:  # noqa: BLE001
             pass

@@ -584,7 +584,7 @@ canvas{max-width:100%}
   <section class="view" id="v-overview">
     <div class="hero">
       <div class="card idxcard" id="idxCard">
-        <header><span class="eyebrow">發行量加權股價指數</span><span class="spacer"></span><div class="seg sm" id="idxSeg" role="group" aria-label="指數區間"><button type="button" data-k="22" aria-pressed="false">1 個月</button><button type="button" data-k="60" aria-pressed="true">3 個月</button></div></header>
+        <header><span class="eyebrow">發行量加權股價指數 <span id="idxWhen" class="muted" style="font-weight:400"></span></span><span class="spacer"></span><div class="seg sm" id="idxSeg" role="group" aria-label="指數區間"><button type="button" data-k="22" aria-pressed="false">1 個月</button><button type="button" data-k="60" aria-pressed="true">3 個月</button></div></header>
         <div class="idx-top"><div class="idx-big" id="idxBig">—</div><div class="delta" id="idxDelta"></div></div>
         <div class="idx-meta" id="idxMeta"></div>
         <div class="chartbox"><canvas id="idxChart" aria-label="加權指數走勢與均線"></canvas></div>
@@ -929,7 +929,7 @@ const GLOSS = {
   "VIX": ["VIX 恐慌指數", "美股市場的恐慌程度。>25 偏恐慌、>30 很恐慌，常伴隨大跌。", ""],
   "費城半導體": ["費城半導體指數（費半）", "美國半導體股的指數，跟台積電等台灣電子股連動很高。", ""],
   "ADR": ["台積電 ADR", "台積電在美國掛牌交易的股票，晚上的漲跌常預告隔天台積電的方向。", ""],
-  "更新時間": ["資料更新時間", "分兩層：①盤後分析（法人、選股、評分、財報、大戶）每個交易日早上 08:00 由雲端排程算好（用前一天收盤後的完整資料），一天只會變一次。②盤中報價與當沖判斷：在「設定」填了富果金鑰，打開網站就直接抓即時成交、每 30 秒自動更新；沒填則用雲端排程的報價（約晚 20 分鐘）。", "下單前仍請以券商 App 報價為準。"],
+  "更新時間": ["資料更新時間", "分兩層：①盤後分析（法人、選股、評分、財報、大戶）每個交易日由雲端排程算兩次：16:40（今天收盤後，法人等資料公布了）和隔天 08:00（補上晚上才公布的融資、當沖統計）。②盤中報價與當沖判斷：在「設定」填了富果金鑰，打開網站就直接抓即時成交、每 30 秒自動更新；沒填則用雲端排程的報價（約晚 20 分鐘）。", "下單前仍請以券商 App 報價為準。"],
 };
 const GLOSS_ALIAS = {"跌破月線": "月線", "距月線": "月線", "跌破季線": "季線", "距季線": "季線", "季線(50MA)": "季線", "站上年線": "年線", "距 5MA": "5MA", "乖離MA5": "乖離", "乖離月線": "乖離", "乖離 MA5": "乖離",
   "廣度": "漲跌家數", "跌÷漲": "漲跌家數", "外資期貨淨部位": "外資期貨", "台指夜盤": "夜盤", "三大法人": "法人", "法人買超": "法人", "融資增減": "融資", "借券賣出": "借券", "當沖占比": "當沖比", "當沖即時": "當沖",
@@ -1035,6 +1035,7 @@ function nextUpdate() {
   const fmt2 = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
   if (d >= 1 && d <= 5) {
     if (hm < 480) return "今天 08:00";
+    if (hm >= 810 && hm < 1000) return "今天 16:40";
     if (hm >= 540 && hm < 810) return rtKey() ? "即時（每 30 秒）" : "約 " + fmt2(Math.ceil((hm + 1) / 5) * 5) + "（盤中每 5 分鐘）";
     if (hm < 540) return "09:00 開盤後";
   }
@@ -1119,7 +1120,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", onTheme)
 function renderTop() {
   const r = S.rep, g = r.market.regime;
   const md = s => { const [, m, d] = s.split("-"); return `${+m}/${+d}`; };
-  $("#basis").innerHTML = `資料基準 ${md(r.basis)} 收盤｜<span class="updinfo"><span class="term" data-term="更新時間" role="button" tabindex="0">更新時間</span><span class="updsched">：每日 08:00、盤中${rtKey() ? "即時" : "每 5 分"}</span></span>｜下次 ${esc(nextUpdate())}`;
+  $("#basis").innerHTML = `資料基準 ${md(r.basis)} 收盤｜<span class="updinfo"><span class="term" data-term="更新時間" role="button" tabindex="0">更新時間</span><span class="updsched">：每日 08:00／16:40、盤中${rtKey() ? "即時" : "每 5 分"}</span></span>｜下次 ${esc(nextUpdate())}`;
   renderPillSum();
   const lv = g.level.key === "green" ? "ok" : g.level.key === "yellow" ? "mid" : "bad";
   const lt = g.longterm.key === "normal" ? "ok" : g.longterm.key === "cautious" ? "mid" : "bad";
@@ -1138,14 +1139,18 @@ function renderTop() {
 
 function renderOverview() {
   const r = S.rep, g = r.market.regime, m = r.market;
-  $("#idxBig").textContent = fmt(g.close, 2);
-  $("#idxBig").className = "idx-big " + cls(g.pct);
-  $("#idxCard").classList.toggle("up", g.pct > 0); $("#idxCard").classList.toggle("down", g.pct < 0);
+  // 有今天的盤中／收盤指數（富果即時或雲端報價）就用今天的，沒有才用每日分析的前一天收盤
+  const li = S.live?.index?.["^TWII"], liveOn = !!(li?.price && li?.prev && (RT.index || (S.live?.updated || "").slice(0, 10) > r.basis));
+  const ic = liveOn ? li.price : g.close, ip = liveOn ? (li.price / li.prev - 1) * 100 : g.pct, prev = liveOn ? li.prev : g.close / (1 + g.pct / 100);
+  $("#idxBig").textContent = fmt(ic, 2);
+  $("#idxBig").className = "idx-big " + cls(ip);
+  $("#idxCard").classList.toggle("up", ip > 0); $("#idxCard").classList.toggle("down", ip < 0);
+  $("#idxWhen").textContent = liveOn ? `・${RT.index ? "即時" : "延遲報價"} ${li.time || ""}` : `・${r.basis.slice(5).replace("-", "/")} 收盤`;
   renderGauge();
-  $("#idxDelta").className = "delta " + cls(g.pct);
-  const prev = g.close / (1 + g.pct / 100);
-  $("#idxDelta").textContent = `${arrow(g.pct)} ${fmt(Math.abs(g.close - prev), 2)}（${pct(g.pct)}）`;
-  $("#idxMeta").innerHTML = [["成交金額", fmt(m.amount_e) + " 億"], ["距 5MA", `<span class="${cls(g.vs_ma5)}">${pct(g.vs_ma5, 1)}</span>`], ["距月線", `<span class="${cls(g.vs_ma20)}">${pct(g.vs_ma20, 1)}</span>`], ["距季線", `<span class="${cls(g.vs_ma50)}">${pct(g.vs_ma50, 1)}</span>`], ["當沖占比", (m.daytrade_market_pct ?? "—") + "%"]]
+  $("#idxDelta").className = "delta " + cls(ip);
+  $("#idxDelta").textContent = `${arrow(ip)} ${fmt(Math.abs(ic - prev), 2)}（${pct(ip)}）`;
+  const amt = RT.index?.amount ? [`成交金額（今日）`, fmt(RT.index.amount / 1e8) + " 億"] : [`成交金額（${r.basis.slice(5).replace("-", "/")}）`, fmt(m.amount_e) + " 億"];
+  $("#idxMeta").innerHTML = [amt, ["距 5MA", `<span class="${cls(g.vs_ma5)}">${pct(g.vs_ma5, 1)}</span>`], ["距月線", `<span class="${cls(g.vs_ma20)}">${pct(g.vs_ma20, 1)}</span>`], ["距季線", `<span class="${cls(g.vs_ma50)}">${pct(g.vs_ma50, 1)}</span>`], ["當沖占比", (m.daytrade_market_pct ?? "—") + "%"]]
     .map(([k, v]) => `<span>${k} <b>${v}</b></span>`).join("");
   const sev = g.level.key === "green" ? ["var(--down-soft)", "var(--down)"] : g.level.key === "yellow" ? ["var(--warn-soft)", "var(--warn)"] : ["var(--up-soft)", "var(--up)"];
   $("#stage").innerHTML = `<span class="badge" style="background:${sev[0]};color:${sev[1]}">${g.stage.match(/\d/)?.[0] ?? "?"}</span><div><b>${esc(g.stage)}</b><span>部位 ${esc(plain(g.level.label))}：單檔 ≤${g.level.single_max}%、現金 ≥${g.level.cash_min}%</span></div>`;
@@ -1949,7 +1954,7 @@ async function pollLive() {
       $("#liveStamp").classList.toggle("on", fresh);
       $("#liveStamp").textContent = fresh ? "延遲報價 " + l.updated.slice(11, 16) : (l.daytrade?.phase?.label || "報價") + " " + l.updated.slice(11, 16);
     }
-    if (!S.live || l.updated !== S.live.updated || S.live.rt) { S.live = l; rtApply(); if (RT.ok) rtStamp(); renderPortfolio(); renderDaytrade(); renderNews(); }
+    if (!S.live || l.updated !== S.live.updated || S.live.rt) { S.live = l; rtApply(); if (RT.ok) rtStamp(); renderPortfolio(); renderDaytrade(); renderNews(); renderOverview(); }
   } catch {}
 }
 
@@ -2059,7 +2064,7 @@ async function rtCycle(force = false) {
     S.live = S.live || {quotes: {}, index: {}, news: [], updated: new Date().toISOString()};
     const ix = await fugle("intraday/quote/IX0001");
     if (ix.date && ix.date !== today && ["trading", "late", "after"].includes(ph.key)) { RT.holiday = today; throw new Error("今天沒有交易"); }
-    const iq = fgQuote(ix); RT.index = {name: "加權指數", price: iq.price, prev: iq.prev, time: iq.time};
+    const iq = fgQuote(ix); RT.index = {name: "加權指數", price: iq.price, prev: iq.prev, time: iq.time, amount: ix.total?.tradeValue || null};
     const codes = [...new Set((S.holdings || []).filter(h => h.shares > 0).map(h => h.stock_id))].slice(0, 25);
     for (const c of codes) { try { RT.quotes[c] = fgQuote(await fugle("intraday/quote/" + c)); } catch (e) { if (e.auth) throw e; } }
     const dtc = S.rep.daytrade.watch || S.rep.daytrade.picks || [];
