@@ -26,7 +26,8 @@ HEAD = ('<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">'
         '</head><body>')
 
 # 未加密個資絕不部署；沒設密碼時 LINE 預覽含持股，也不部署
-SKIP = {"private.json", "live_private.json"} | (set() if os.environ.get("STOCK_PASSWORD") else {"line_preview.json"})
+# 持股只放在各人加密的持股本（data/vaults.json），舊版站長私有檔不再發布
+SKIP = {"private.json", "live_private.json", "private.enc.json", "live_private.enc.json", "line_preview.json"}
 
 
 def main():

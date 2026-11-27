@@ -16,3 +16,5 @@ line_out.txt
 site/data/live_private.json
 site/data/stock/
 databranch/
+site/data/private.enc.json
+site/data/live_private.enc.json

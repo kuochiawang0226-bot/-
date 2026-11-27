@@ -639,31 +639,23 @@ canvas{max-width:100%}
 
   <section class="view" id="v-portfolio" hidden>
     <div id="pfLock" hidden class="card lock">
-      <h2>開啟持股</h2>
-      <p class="note" style="margin:0">持股只以加密方式存放，沒有密碼誰都看不到。選一種方式：</p>
-      <div class="vaultopts">
-        <section>
-          <h3>我的持股本</h3>
-          <p class="note" style="margin:0">每個人（包含站長、朋友）取一個名字、設自己的密碼。持股加密後<b>只存在這台手機或電腦</b>，別人都看不到；紅黃綠燈、走勢與進出場訊號會自動分析。</p>
-          <div id="vaultOpen"></div>
-          <details class="more"><summary><svg class="i"><use href="#i-edit"/></svg>建立新的持股本</summary>
-            <div class="form" style="grid-template-columns:1fr">
-              <label class="f">名字（例如：小明）<input id="vName" maxlength="20"></label>
-              <label class="f">密碼<input id="vPw" type="password" autocomplete="new-password"></label>
-              <label class="f">再輸入一次密碼<input id="vPw2" type="password" autocomplete="new-password"></label>
-            </div>
-            <div class="actions" style="margin-top:10px"><button class="btn primary" id="vCreate" type="button">建立並開啟</button><span class="note" id="vMsg"></span></div>
-          </details>
-          <label class="btn" for="vImport" style="justify-content:center">匯入備份檔（從別台裝置帶過來）<input id="vImport" type="file" accept=".json,application/json" hidden></label>
-        </section>
-        <section>
-          <h3>站長的舊版雲端持股</h3>
-          <p class="note" style="margin:0">之前存在雲端的持股。解鎖後按「轉成持股本」，以後就跟大家一樣用持股本，不必設定任何金鑰。</p>
-          <label class="f">密碼<input id="pwIn" type="password" autocomplete="current-password"></label>
-          <label class="note"><input id="pwRemember" type="checkbox" style="width:auto"> 在這台裝置記住密碼</label>
-          <div class="actions"><button class="btn" id="pwBtn" type="button">解鎖</button><span class="note" id="pwMsg"></span></div>
-        </section>
+      <h2>開啟我的持股</h2>
+      <p class="note" style="margin:0">輸入名字和密碼。持股加密保存，別人看不到。</p>
+      <div class="form" style="grid-template-columns:1fr;max-width:420px;width:100%">
+        <label class="f">名字<input id="vOpenName" list="vNames" maxlength="20" autocomplete="username"></label><datalist id="vNames"></datalist>
+        <label class="f">密碼<input id="vOpenPw" type="password" autocomplete="current-password"></label>
+        <label class="note"><input id="vRemember" type="checkbox" style="width:auto" checked> 這台裝置記住我（下次打開直接進來）</label>
       </div>
+      <div class="actions"><button class="btn primary" id="vOpen" type="button">開啟</button><span class="note" id="vOpenMsg"></span></div>
+      <details class="more" style="width:100%;max-width:420px"><summary><svg class="i"><use href="#i-edit"/></svg>第一次用？建立我的持股</summary>
+        <div class="form" style="grid-template-columns:1fr">
+          <label class="f">名字（例如：小明）<input id="vName" maxlength="20"></label>
+          <label class="f">密碼<input id="vPw" type="password" autocomplete="new-password"></label>
+          <label class="f">再輸入一次密碼<input id="vPw2" type="password" autocomplete="new-password"></label>
+        </div>
+        <div class="actions" style="margin-top:10px"><button class="btn primary" id="vCreate" type="button">建立並開啟</button><span class="note" id="vMsg"></span></div>
+      </details>
+      <label class="btn" for="vImport" style="justify-content:center">匯入備份檔<input id="vImport" type="file" accept=".json,application/json" hidden></label>
     </div>
     <div id="pfBody" class="view">
       <div class="card modebar" id="modeBar"></div>
@@ -771,14 +763,8 @@ canvas{max-width:100%}
   <section class="view" id="v-setup" hidden>
     <div class="grid g2">
       <div class="card">
-        <header><svg class="i"><use href="#i-wallet"/></svg><h2>持股本怎麼用</h2></header>
-        <ol class="steps">
-          <li><b>建立：</b>到「持股」→「建立新的持股本」，取名字、設密碼。</li>
-          <li><b>登錄：</b>逐筆填、貼文字或上傳券商截圖，存檔後立刻分析（紅黃綠燈、停損、走勢、進出場訊號）。</li>
-          <li><b>換手機／電腦：</b>舊裝置按「下載備份」→ 把檔案傳到新裝置（LINE 傳給自己、Email 都可）→ 新裝置按「匯入備份檔」，輸入同一組密碼。</li>
-          <li><b>給朋友：</b>把網址給他，他在自己的手機建立自己的持股本即可，彼此看不到。</li>
-        </ol>
-        <p class="note" style="margin-bottom:0">密碼是用來<b>鎖住</b>持股的；持股只存在您的裝置，網站伺服器上沒有任何人的持股明細。忘記密碼就打不開，請記好。</p>
+        <header><svg class="i"><use href="#i-wallet"/></svg><h2>我的持股</h2></header>
+        <p class="note" style="margin:0">每個人用自己的名字和密碼開啟，彼此看不到。換手機：舊手機「下載備份」→ 新手機「匯入備份檔」。</p>
       </div>
       <div class="card" id="rtCard">
         <header><svg class="i"><use href="#i-pulse"/></svg><h2>即時報價（選用）</h2><span class="spacer"></span><span class="sub" id="rtState"></span></header>
@@ -1416,8 +1402,17 @@ async function saveVault() {
   const v = vaults(); v[S.vault.name] = await encryptObj(holdingsDoc(), S.vault.pw); store.set("vaults", v);
 }
 async function openVault(name, pw) {
-  const blob = vaults()[name]; if (!blob) throw new Error("找不到");
-  const d = await decryptBlob(blob, pw);
+  let blob = vaults()[name], d;
+  if (blob) d = await decryptBlob(blob, pw);
+  else {
+    let seeds = []; try { seeds = await getJSON("data/vaults.json"); } catch {}
+    for (const b of seeds) { try { d = await decryptBlob(b, pw); blob = b; break; } catch {} }
+    if (!d) throw new Error("找不到");
+    const lh = store.get("holdings");                 // 這台裝置以前改過、比雲端新的持股優先
+    if (lh?.saved && lh.saved.slice(0, 10) >= (d.last_updated || "")) d = {...d, holdings: lh.holdings, cash: lh.cash ?? d.cash, history: lh.history?.length ? lh.history : d.history};
+    const v = vaults(); v[name] = await encryptObj(d, pw); store.set("vaults", v); store.del("holdings");
+  }
+  if (d.fugle && !rtKey()) { store.set("fugle", d.fugle); setTimeout(() => rtCycle(true), 500); }
   S.mode = "vault"; S.vault = {name, pw}; S.pw = null;
   S.priv = {history: d.history || [], holdings_raw: d};
   S.holdings = (d.holdings || []).map(h => ({...h})); S.cash = d.cash ?? null; S.needUnlock = false;
@@ -1425,20 +1420,19 @@ async function openVault(name, pw) {
   renderPortfolio(); renderOverview(); renderNews(); renderPicks();
 }
 function renderVaultOpen() {
-  const names = Object.keys(vaults()), last = store.get("lastVault");
-  $("#vaultOpen").innerHTML = names.length ? `<div class="form" style="grid-template-columns:1fr">
-      <label class="f">選擇持股本<select id="vSel">${names.map(n => `<option${n === last ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
-      <label class="f">密碼<input id="vOpenPw" type="password" autocomplete="current-password"></label></div>
-      <div class="actions" style="margin-top:10px"><button class="btn primary" id="vOpen" type="button">開啟</button><span class="note" id="vOpenMsg"></span></div>`
-    : `<p class="note" style="margin:0">這台裝置還沒有持股本，按下面「建立新的持股本」開始。</p>`;
+  $("#vNames").innerHTML = Object.keys(vaults()).map(n => `<option value="${esc(n)}">`).join("");
+  if (!$("#vOpenName").value) $("#vOpenName").value = store.get("lastVault") || "";
 }
 function logoutHoldings() {
   S.holdings = null; S.priv = null; S.pw = null; S.vault = null; S.mode = null; S.needUnlock = true;
-  store.del("pw"); renderVaultOpen(); renderPortfolio(); renderOverview(); renderNews();
+  store.del("pw"); store.del("autoVault"); renderVaultOpen(); renderPortfolio(); renderOverview(); renderNews();
 }
 document.addEventListener("click", async e => {
   if (e.target.closest("#vOpen")) {
-    try { await openVault($("#vSel").value, $("#vOpenPw").value); toast("已開啟持股本"); } catch { $("#vOpenMsg").textContent = "密碼不正確"; }
+    const name = $("#vOpenName").value.trim(), pw = $("#vOpenPw").value;
+    if (!name) { $("#vOpenMsg").textContent = "請輸入名字"; return; }
+    try { await openVault(name, pw); if ($("#vRemember").checked) store.set("autoVault", {name, pw}); $("#vOpenPw").value = ""; $("#vOpenMsg").textContent = ""; toast("已開啟"); }
+    catch { $("#vOpenMsg").textContent = "名字或密碼不正確"; }
   }
   if (e.target.closest("#vCreate")) {
     const name = $("#vName").value.trim(), pw = $("#vPw").value;
@@ -1447,14 +1441,9 @@ document.addEventListener("click", async e => {
     if (pw !== $("#vPw2").value) { $("#vMsg").textContent = "兩次密碼不一樣"; return; }
     if (vaults()[name]) { $("#vMsg").textContent = "這個名字已經有了"; return; }
     const v = vaults(); v[name] = await encryptObj({holdings: [], cash: null, history: [], created: new Date().toISOString()}, pw); store.set("vaults", v);
-    await openVault(name, pw); toast(`已建立「${name}」的持股本`);
+    await openVault(name, pw); store.set("autoVault", {name, pw}); toast(`已建立「${name}」的持股`);
   }
   if (e.target.closest("#logoutBtn")) logoutHoldings();
-  if (e.target.closest("#toVault")) {
-    const v = vaults(); let name = "站長"; while (v[name]) name += "2";
-    v[name] = await encryptObj(holdingsDoc(), S.pw); store.set("vaults", v); store.del("holdings");
-    await openVault(name, S.pw); toast(`已轉成「${name}」的持股本，密碼不變`);
-  }
   if (e.target.closest("#vExport")) {
     const blob = new Blob([JSON.stringify({kind: "台股作戰台持股本", name: S.vault.name, data: vaults()[S.vault.name]})], {type: "application/json"});
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `持股本-${S.vault.name}.json`; document.body.append(a); a.click(); a.remove();
@@ -1474,11 +1463,9 @@ $("#vImport").addEventListener("change", async e => {
   } catch { toast("這不是持股本備份檔"); }
 });
 function renderModeBar() {
-  if (!S.holdings) { $("#modeBar").hidden = true; return; }
+  if (!S.holdings || !S.vault) { $("#modeBar").hidden = true; return; }
   $("#modeBar").hidden = false;
-  $("#modeBar").innerHTML = S.mode === "vault"
-    ? `${icon("book")}<div><b>${esc(S.vault.name)} 的持股本</b><div class="note">加密後只存在這台裝置，別人看不到。換手機前記得下載備份。</div></div><span class="spacer"></span><button class="btn" type="button" id="vExport">下載備份</button><button class="btn danger" type="button" id="vDelete">刪除</button><button class="btn" type="button" id="logoutBtn">登出／切換</button>`
-    : `${icon("wallet")}<div><b>站長的舊版雲端持股</b><div class="note">建議轉成持股本：之後修改立即生效，不用金鑰、不用等排程。</div></div><span class="spacer"></span><button class="btn primary" type="button" id="toVault">轉成持股本</button><button class="btn" type="button" id="logoutBtn">登出／切換</button>`;
+  $("#modeBar").innerHTML = `${icon("wallet")}<div><b>${esc(S.vault.name)} 的持股</b><div class="note">改完自動加密儲存。換手機前按「下載備份」。</div></div><span class="spacer"></span><button class="btn" type="button" id="vExport">下載備份</button><button class="btn danger" type="button" id="vDelete">刪除</button><button class="btn" type="button" id="logoutBtn">登出</button>`;
 }
 function upsert(h, mode = "set") {
   S.holdings = S.holdings || [];
@@ -1592,7 +1579,7 @@ $("#parseBtn").addEventListener("click", () => showParsed(parseText($("#hText").
 $("#cancelBtn").addEventListener("click", () => { pending = []; $("#parsed").hidden = true; });
 $("#applyBtn").addEventListener("click", () => {
   pending.forEach(r => { const {mode, ...h} = r; if (!h.stock_name) h.stock_name = S.byCode[h.stock_id]?.n || h.stock_id; upsert(h, mode); });
-  saveLocal(); pending = []; $("#parsed").hidden = true; renderPortfolio(); renderOverview(); toast(S.mode === "vault" ? "已套用，已加密存在這台裝置" : "已套用（存在這台裝置）；建議按上方「轉成持股本」");
+  saveLocal(); pending = []; $("#parsed").hidden = true; renderPortfolio(); renderOverview(); toast("已套用並加密儲存");
 });
 async function readShot(file) {
   const msg = $("#shotMsg");
@@ -1622,7 +1609,7 @@ const drop = $("#drop");
 drop.addEventListener("drop", e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) readShot(f); });
 $("#shotIn").addEventListener("change", e => { const f = e.target.files[0]; if (f) readShot(f); e.target.value = ""; });
 document.addEventListener("paste", e => { if (location.hash !== "#portfolio") return; const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith("image/")); if (f) { $$("#editSeg button")[2].click(); readShot(f); } });
-function holdingsDoc() { const raw = S.priv?.holdings_raw || {}; return {...raw, holdings: S.holdings || [], cash: S.cash ?? raw.cash ?? null, history: S.priv?.history || raw.history || [], last_updated: new Date().toISOString().slice(0, 10)}; }
+function holdingsDoc() { const raw = S.priv?.holdings_raw || {}; return {...raw, holdings: S.holdings || [], cash: S.cash ?? raw.cash ?? null, history: S.priv?.history || raw.history || [], fugle: rtKey() || raw.fugle || undefined, last_updated: new Date().toISOString().slice(0, 10)}; }
 $("#exportBtn").addEventListener("click", async () => {
   const txt = JSON.stringify(holdingsDoc(), null, 2);
   try { await navigator.clipboard.writeText(txt); toast("已複製持股 JSON"); } catch { $("#hText").value = txt; $$("#editSeg button")[1].click(); toast("無法存取剪貼簿，已放到「貼文字」欄位"); }
@@ -1923,14 +1910,12 @@ function renderSetup() {
   renderRtState();
   $("#quality").innerHTML = Object.entries(S.rep.quality).map(([k, v]) => `<div class="row"><span>${esc(k)}</span><span class="r note" style="font-family:inherit;text-align:right">${esc(gradeText(v))}</span></div>`).join("");
 }
-{ const g = store.get("gh", null); if (g) { if (g.pw && !store.get("pw")) store.set("pw", g.pw); store.del("gh"); } }
+store.del("gh"); store.del("pw");
 
 
 async function pollLive() {
   try {
     const l = await getJSON("data/live.json");
-    try { const pq = await getJSON("data/live_private.json"); l.quotes = {...(pq.quotes || {}), ...l.quotes}; } catch {}
-    if (S.pw) { try { const pq = await decryptBlob(await getJSON("data/live_private.enc.json"), S.pw); l.quotes = {...(pq.quotes || {}), ...l.quotes}; } catch {} }
     const ph = l.daytrade?.phase?.key, open = ["opening", "trading", "late"].includes(ph);
     const fresh = open && (Date.now() - new Date(l.updated).getTime()) < 20 * 60 * 1000;
     if (!RT.ok) {
@@ -1945,7 +1930,7 @@ async function pollLive() {
 /* ═══ 即時報價：富果行情 API（每人自己的免費金鑰，瀏覽器直接連證交所即時資料）═══
    有金鑰：打開網站就抓，盤中每 30 秒更新持股、大盤、當沖判斷（當沖邏輯與雲端排程相同）。
    沒金鑰：沿用雲端排程資料（Yahoo，約晚 20 分鐘）。 */
-const RT = {quotes: {}, index: null, dt: null, ok: 0, err: "", running: false, unit: store.get("fugleUnit", 0)};
+const RT = {quotes: {}, index: null, dt: null, ok: 0, err: "", running: false};
 const rtKey = () => store.get("fugle", "");
 function twNow() { const d = new Date(); return new Date(d.getTime() + (d.getTimezoneOffset() + 480) * 60000); }
 const twDate = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -1976,13 +1961,10 @@ const fv = (...xs) => { for (const x of xs) if (x != null && !isNaN(+x) && +x > 
 function fgTime(q) { const us = q.lastUpdated || q.lastTrade?.time || q.total?.time; return us ? hm(new Date(us / 1000 + (new Date().getTimezoneOffset() + 480) * 60000)) : hm(twNow()); }
 function fgQuote(q) {
   const price = fv(q.lastPrice, q.closePrice, q.lastTrade?.price), prev = fv(q.previousClose, q.referencePrice);
-  if (!RT.unit && q.total?.tradeVolume && q.total?.tradeValue && price) {   // 判斷成交量單位是「張」還是「股」
-    const shares = q.total.tradeValue / (fv(q.avgPrice) || price);
-    RT.unit = Math.abs(q.total.tradeVolume * 1000 / shares - 1) < 0.35 ? 1000 : 1; store.set("fugleUnit", RT.unit);
-  }
-  return {price, prev, open: fv(q.openPrice), high: fv(q.highPrice), low: fv(q.lowPrice), volume: (q.total?.tradeVolume || 0) * (RT.unit || 1),
+  return {price, prev, open: fv(q.openPrice), high: fv(q.highPrice), low: fv(q.lowPrice), volume: (q.total?.tradeVolume || 0) * fgUnit(q),
     time: fgTime(q), src: "富果即時", date: q.date};
 }
+const fgUnit = j => j.market === "ESB" || j.type === "INDEX" ? 1 : 1000;   // 富果：上市櫃成交量單位是張，興櫃是股
 const g2 = x => String(+(+x).toFixed(2));
 /* 當沖判斷：與 engine/intraday.py evaluate() 相同規則 */
 function evalDT(c, bars, pc, avgVol, now, verdict) {
@@ -2025,8 +2007,8 @@ function evalDT(c, bars, pc, avgVol, now, verdict) {
     lot_cost_w: +(last * 1000 / 1e4).toFixed(1), lots: Math.floor(500000 / (last * 1000)) || 0, live: true};
 }
 function fgBars(j) {
-  const off = (new Date().getTimezoneOffset() + 480) * 60000;
-  return (j.data || []).map(b => { const t = new Date(new Date(b.date).getTime() + off); return {t, m: t.getHours() * 60 + t.getMinutes(), o: +b.open, h: +b.high, l: +b.low, c: +b.close, v: (+b.volume || 0) * (RT.unit || 1)}; }).sort((a, b) => a.t - b.t);
+  const off = (new Date().getTimezoneOffset() + 480) * 60000, u = fgUnit(j);
+  return (j.data || []).map(b => { const t = new Date(new Date(b.date).getTime() + off); return {t, m: t.getHours() * 60 + t.getMinutes(), o: +b.open, h: +b.high, l: +b.low, c: +b.close, v: (+b.volume || 0) * u}; }).sort((a, b) => a.t - b.t);
 }
 async function avgVolOf(code) {
   if (!(code in S.det) || S.det[code] === null) S.det[code] = await loadDetail(code) || false;
@@ -2054,7 +2036,6 @@ async function rtCycle(force = false) {
     const codes = [...new Set((S.holdings || []).filter(h => h.shares > 0).map(h => h.stock_id))].slice(0, 25);
     for (const c of codes) { try { RT.quotes[c] = fgQuote(await fugle("intraday/quote/" + c)); } catch (e) { if (e.auth) throw e; } }
     const dtc = S.rep.daytrade.watch || S.rep.daytrade.picks || [];
-    if (dtc.length && !RT.unit) fgQuote(await fugle("intraday/quote/" + dtc[0].code));
     const items = [];
     for (const c of dtc.slice(0, 10)) {
       try { items.push(evalDT(c, fgBars(await fugle(`intraday/candles/${c.code}?timeframe=1`)), c.close, await avgVolOf(c.code), twNow(), S.rep.daytrade.verdict)); }
@@ -2089,24 +2070,11 @@ $("#fgSave").addEventListener("click", async () => {
   if (!v || v.startsWith("•")) { msg.textContent = "請貼上金鑰"; return; }
   msg.textContent = "測試中…";
   try { const q = await fugle("intraday/quote/2330", v); if (!fv(q.lastPrice, q.closePrice, q.previousClose, q.referencePrice)) throw new Error("回傳格式不對");
-    store.set("fugle", v); store.del("fugleUnit"); RT.unit = 0; fgQuote(q); msg.textContent = `成功！台積電 ${fv(q.lastPrice, q.closePrice, q.referencePrice)}（${q.date || ""}）`; renderSetup(); rtCycle(true); }
+    store.set("fugle", v); if (S.vault) saveVault(); msg.textContent = `成功！台積電 ${fv(q.lastPrice, q.closePrice, q.referencePrice)}（${q.date || ""}）`; renderSetup(); rtCycle(true); }
   catch (e) { msg.textContent = "失敗：" + e.message; }
 });
-$("#fgClear").addEventListener("click", () => { store.del("fugle"); store.del("fugleUnit"); RT.ok = 0; RT.quotes = {}; RT.dt = null; renderSetup(); renderRtState(); toast("已清除，改用排程資料"); pollLive(); });
+$("#fgClear").addEventListener("click", () => { store.del("fugle"); RT.ok = 0; RT.quotes = {}; RT.dt = null; renderSetup(); renderRtState(); toast("已清除，改用排程資料"); pollLive(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { rtCycle(); pollLive(); } });
-
-async function unlock(pw) { S.priv = await decryptBlob(await getJSON("data/private.enc.json"), pw); S.pw = pw; S.mode = "owner"; S.vault = null; applyPrivate(); S.live = null; pollLive(); }
-function applyPrivate() {
-  const local = store.get("holdings"), srvDate = S.priv?.holdings_raw?.last_updated || "";
-  if (local && local.saved && local.saved.slice(0, 10) >= srvDate) { S.holdings = local.holdings; S.cash = local.cash; if (local.history?.length) S.priv.history = local.history; }
-  else { S.holdings = (S.priv?.holdings_raw?.holdings || []).map(h => ({...h})); S.cash = S.priv?.holdings_raw?.cash ?? null; }
-  S.needUnlock = false;
-  renderPortfolio(); renderOverview(); renderNews(); renderPicks();
-}
-$("#pwBtn").addEventListener("click", async () => {
-  try { await unlock($("#pwIn").value); if ($("#pwRemember").checked) store.set("pw", $("#pwIn").value); $("#pwMsg").textContent = ""; toast("已解鎖"); }
-  catch { $("#pwMsg").textContent = "密碼不正確"; }
-});
 
 async function boot() {
   route();
@@ -2116,12 +2084,9 @@ async function boot() {
   const inds = [...new Set(S.stocks.map(r => r.i).filter(Boolean))].sort();
   $("#indSel").insertAdjacentHTML("beforeend", inds.map(i => `<option value="${esc(i)}">${esc(i)}</option>`).join(""));
   renderTop();
-  try { S.priv = await getJSON("data/private.json"); S.mode = "owner"; applyPrivate(); }
-  catch {
-    const pw = store.get("pw");
-    try { if (pw) await unlock(pw); else throw 0; }
-    catch { S.needUnlock = true; }
-  }
+  S.needUnlock = true;
+  const av = store.get("autoVault");
+  if (av) { try { await openVault(av.name, av.pw); } catch { store.del("autoVault"); } }
   renderOverview(); renderPicks(); renderDaytrade(); renderPortfolio(); renderNews(); renderBacktest(); renderSetup(); renderDict(); route();
   linkTerms(document.body); setupCollapsibles(); observeEnhance();
   setInterval(() => { if (S.rep) renderTop(); }, 60000);

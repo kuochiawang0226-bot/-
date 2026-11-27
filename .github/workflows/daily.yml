@@ -41,15 +41,13 @@ jobs:
         run: python -m engine.run_daily
       - name: 盤中報價與新聞初始化
         run: python -m engine.run_live || true
-      - name: 出場規則回測（晚上那次才跑）
-        if: github.event.schedule == '40 9 * * 1-5' || github.event_name == 'workflow_dispatch'
-        run: timeout 900 python -m engine.exit_study || true
+      - name: 出場規則回測（傍晚那次才跑）
+        run: if [ "$(date +%H)" -ge 15 ]; then timeout 900 python -m engine.exit_study || true; fi
       - name: 存回 main（小檔案）
         run: |
           git config user.name "stock-bot"
           git config user.email "stock-bot@users.noreply.github.com"
           for f in site/data/report.json site/data/stocks.json site/data/live.json site/data/exit_study.json data/exit_study.json data/scorecard data/daily data/tdcc; do if [ -e "$f" ]; then git add "$f"; fi; done
-          git add site/data/private.enc.json site/data/live_private.enc.json 2>/dev/null || true
           git diff --cached --quiet || git commit -m "每日資料 $(date +%F_%H%M)"
           git pull --rebase -X ours || true
           git push
