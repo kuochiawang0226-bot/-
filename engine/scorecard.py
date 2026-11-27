@@ -50,14 +50,17 @@ def save(sel: list[dict], day: list[dict]) -> None:
 
 # ───────── K 線來源：上市用證交所 STOCK_DAY（官方），其餘用 Yahoo ─────────
 _bar_cache: dict = {}
+PRELOADED: dict = {}   # run_daily 已經抓好的日 K（含官方收盤覆寫），有就直接用，不再逐檔打證交所
 
 
 def bars_after(code: str, market: str, start: dt.date) -> list[dict]:
     key = (code, market, start)
     if key in _bar_cache:
         return _bar_cache[key]
-    bars = []
-    if market in (None, "", "上市"):
+    bars = list(PRELOADED.get(code) or [])
+    if bars and bars[0]["date"] > start:
+        bars = []
+    if not bars and market in (None, "", "上市"):
         m = dt.date(start.year, start.month, 1)
         today = dt.date.today()
         while m <= today:

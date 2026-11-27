@@ -289,6 +289,7 @@ def build(now: dt.datetime) -> dict:
         ma200 = sum(cl[-200:]) / 200
     regime = stg.market_regime(idx_closes, basis_pct, mi["breadth"], (oi or {}).get("外資", {}).get("oi_net"),
                                sox.get("down3"), event_day=False, ma200=ma200)
+    scorecard.PRELOADED.update({c: s["_bars"] for c, s in stocks.items() if s.get("_bars")})
     sel, dtrec = scorecard.load()
     n1 = try_("中長期補分", lambda: scorecard.score_selection(sel, today), fallback=0)
     n2 = try_("當沖補分", lambda: scorecard.score_daytrade(dtrec, today), fallback=0)
