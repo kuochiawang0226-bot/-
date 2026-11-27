@@ -169,6 +169,9 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .pillsum .d{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600}
 .pillsum .d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--faint))}
 .pillsum .more{margin-left:auto;font-size:.76rem;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+.nudge{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.nudge span{flex:1;min-width:200px}
+.nudge .iconbtn.sm{width:30px;height:30px}
 #refreshBtn.spin svg{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface-solid);color:var(--ink);cursor:pointer;flex:none}
@@ -362,6 +365,8 @@ th.sort[aria-sort="ascending"]::after{content:" ↑"}
 .callout.red{border-left-color:var(--up);background:var(--up-soft)}
 .callout.amber{border-left-color:var(--warn);background:var(--warn-soft)}
 .callout.green{border-left-color:var(--down);background:var(--down-soft)}
+.callout.blue{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.btn.sm{padding:6px 12px;font-size:.8rem}
 .ribbon{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--line);font-size:.78rem}
 .ribbon .go{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;white-space:nowrap}
 
@@ -575,6 +580,7 @@ canvas{max-width:100%}
     <div class="pillwrap"><button class="pillsum" id="pillSum" type="button" aria-expanded="false" aria-controls="pills"></button><div class="pills" id="pills" hidden></div></div>
   </header>
 <main class="wrap">
+  <div class="callout blue nudge" id="rtNudge" hidden><span>⚡ 想看<b>跟券商同步的即時報價</b>和當沖判斷？免費申請富果金鑰，3 分鐘搞定。</span><a class="btn primary sm" href="#setup">怎麼申請</a><button class="iconbtn sm" type="button" id="rtNudgeX" aria-label="關閉"><svg class="i"><use href="#i-x"/></svg></button></div>
   <section class="view" id="v-overview">
     <div class="hero">
       <div class="card idxcard" id="idxCard">
@@ -2074,7 +2080,7 @@ $("#fgSave").addEventListener("click", async () => {
   if (!v || v.startsWith("•")) { msg.textContent = "請貼上金鑰"; return; }
   msg.textContent = "測試中…";
   try { const q = await fugle("intraday/quote/2330", v); if (!fv(q.lastPrice, q.closePrice, q.previousClose, q.referencePrice)) throw new Error("回傳格式不對");
-    store.set("fugle", v); if (S.vault) saveVault(); msg.textContent = `成功！台積電 ${fv(q.lastPrice, q.closePrice, q.referencePrice)}（${q.date || ""}）`; renderSetup(); rtCycle(true); }
+    store.set("fugle", v); if (S.vault) saveVault(); renderNudge(); msg.textContent = `成功！台積電 ${fv(q.lastPrice, q.closePrice, q.referencePrice)}（${q.date || ""}）`; renderSetup(); rtCycle(true); }
   catch (e) { msg.textContent = "失敗：" + e.message; }
 });
 $("#fgClear").addEventListener("click", () => { store.del("fugle"); RT.ok = 0; RT.quotes = {}; RT.dt = null; renderSetup(); renderRtState(); toast("已清除，改用排程資料"); pollLive(); });
@@ -2099,6 +2105,14 @@ $("#refreshBtn").addEventListener("click", async () => {
   btn.classList.remove("spin");
 });
 setInterval(() => checkReport(false), 10 * 60 * 1000);
+/* 沒有富果金鑰的人（例如朋友），盤中提示一下怎麼開即時報價；關掉後當天不再出現 */
+function renderNudge() {
+  const ph = rtPhase().key, today = twDate(twNow());
+  $("#rtNudge").hidden = !!rtKey() || !["opening", "trading", "late"].includes(ph) || store.get("nudgeOff") === today || location.hash === "#setup";
+}
+$("#rtNudgeX").addEventListener("click", () => { store.set("nudgeOff", twDate(twNow())); renderNudge(); });
+window.addEventListener("hashchange", renderNudge);
+setInterval(renderNudge, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { rtCycle(); pollLive(); checkReport(false); } });
 
 async function boot() {
@@ -2116,7 +2130,7 @@ async function boot() {
   linkTerms(document.body); setupCollapsibles(); observeEnhance();
   setInterval(() => { if (S.rep) renderTop(); }, 60000);
   await pollLive(); setInterval(pollLive, 60000);
-  rtCycle(true); setInterval(() => rtCycle(), 30000);
+  rtCycle(true); setInterval(() => rtCycle(), 30000); renderNudge();
 }
 boot();
 </script>
