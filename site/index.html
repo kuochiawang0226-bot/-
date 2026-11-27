@@ -169,6 +169,8 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .pillsum .d{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600}
 .pillsum .d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--faint))}
 .pillsum .more{margin-left:auto;font-size:.76rem;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+#refreshBtn.spin svg{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .iconbtn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface-solid);color:var(--ink);cursor:pointer;flex:none}
 .iconbtn:hover{color:var(--accent);border-color:var(--accent)}
 .updinfo{display:inline-flex;align-items:center;gap:4px}
@@ -544,6 +546,7 @@ canvas{max-width:100%}
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></symbol>
@@ -568,7 +571,7 @@ canvas{max-width:100%}
 </aside>
 <div class="col">
   <header class="topbar">
-    <div class="tb1"><span class="mark sm" aria-hidden="true">股</span><div><h1 id="viewTitle">總覽</h1><span class="basis" id="basis">載入資料中…</span></div><span class="spacer"></span><span class="livedot" id="liveStamp">盤後</span><button class="iconbtn" id="searchBtn" type="button" aria-label="查個股"><svg class="i"><use href="#i-search"/></svg></button><button class="themebtn" type="button" data-theme-toggle aria-label="切換深淺色"><svg class="i"><use href="#i-moon"/></svg><span>深淺色</span></button></div>
+    <div class="tb1"><span class="mark sm" aria-hidden="true">股</span><div><h1 id="viewTitle">總覽</h1><span class="basis" id="basis">載入資料中…</span></div><span class="spacer"></span><span class="livedot" id="liveStamp">盤後</span><button class="iconbtn" id="refreshBtn" type="button" aria-label="立即更新" title="立即更新"><svg class="i"><use href="#i-refresh"/></svg></button><button class="iconbtn" id="searchBtn" type="button" aria-label="查個股"><svg class="i"><use href="#i-search"/></svg></button><button class="themebtn" type="button" data-theme-toggle aria-label="切換深淺色"><svg class="i"><use href="#i-moon"/></svg><span>深淺色</span></button></div>
     <div class="pillwrap"><button class="pillsum" id="pillSum" type="button" aria-expanded="false" aria-controls="pills"></button><div class="pills" id="pills" hidden></div></div>
   </header>
 <main class="wrap">
@@ -2073,7 +2076,28 @@ $("#fgSave").addEventListener("click", async () => {
   catch (e) { msg.textContent = "失敗：" + e.message; }
 });
 $("#fgClear").addEventListener("click", () => { store.del("fugle"); RT.ok = 0; RT.quotes = {}; RT.dt = null; renderSetup(); renderRtState(); toast("已清除，改用排程資料"); pollLive(); });
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { rtCycle(); pollLive(); } });
+/* 每日分析有新版（08:00 排程跑完）就自動換上；立即更新鈕：報價、當沖、新聞、每日分析全部重抓一次 */
+async function checkReport(manual) {
+  try {
+    const r = await getJSON("data/report.json");
+    if (r.generated_at !== S.rep?.generated_at) { toast("每日分析有新資料，重新載入中…"); setTimeout(() => location.reload(), 900); return true; }
+  } catch {}
+  return false;
+}
+let lastManual = 0;
+$("#refreshBtn").addEventListener("click", async () => {
+  const btn = $("#refreshBtn"); if (btn.classList.contains("spin")) return;
+  if (Date.now() - lastManual < 10000) { toast("剛剛才更新過，10 秒後再試"); return; }
+  lastManual = Date.now(); btn.classList.add("spin");
+  if (await checkReport(true)) return;
+  await pollLive();
+  const ph = rtPhase().key;
+  if (rtKey() && !["pre", "closed"].includes(ph)) { RT.after = null; await rtCycle(true); toast(RT.err ? "即時報價暫時抓不到：" + RT.err : "已更新到 " + RT.stamp); }
+  else toast(rtKey() ? "現在不是交易時間，已是最新資料" : "已更新；設定富果金鑰可看到真正即時的報價");
+  btn.classList.remove("spin");
+});
+setInterval(() => checkReport(false), 10 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { rtCycle(); pollLive(); checkReport(false); } });
 
 async function boot() {
   route();
