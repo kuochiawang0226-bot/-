@@ -2014,11 +2014,15 @@ function rtPhase(d = twNow()) {
   if (m < 810) return {key: "late", label: "尾盤", note: "13:00 後不新開倉，手上部位準備平倉"};
   return {key: "after", label: "盤後", note: "今日已收盤；下方為今日盤中最後狀態，明早更新候選"};
 }
-let rtChain = Promise.resolve(), rtLast = 0;
-function fugle(path, key = rtKey()) {      // 免費方案每分鐘 60 次：每次間隔 1.1 秒排隊送出
+let rtChain = Promise.resolve(); const rtSent = [];
+function fugle(path, key = rtKey()) {      // 免費方案每分鐘 60 次：60 秒內最多送 55 次，額度內立刻送，滿了才等
   const run = async () => {
-    const w = rtLast + 1100 - Date.now(); if (w > 0) await new Promise(r => setTimeout(r, w));
-    rtLast = Date.now();
+    for (;;) {
+      while (rtSent.length && Date.now() - rtSent[0] > 60000) rtSent.shift();
+      if (rtSent.length < 55) break;
+      await new Promise(r => setTimeout(r, 60000 - (Date.now() - rtSent[0]) + 50));
+    }
+    rtSent.push(Date.now());
     const r = await fetch("https://api.fugle.tw/marketdata/v1.0/stock/" + path, {headers: {"X-API-KEY": key}, cache: "no-store"});
     if (r.status === 401 || r.status === 403) throw Object.assign(new Error("金鑰無效或已過期"), {auth: true});
     if (r.status === 429) throw new Error("超過每分鐘次數上限，稍後自動重試");
@@ -2105,6 +2109,7 @@ async function rtCycle(force = false) {
     const iq = fgQuote(ix); RT.index = {name: "加權指數", price: iq.price, prev: iq.prev, time: iq.time, amount: ix.total?.tradeValue || null};
     const codes = [...new Set((S.holdings || []).filter(h => h.shares > 0).map(h => h.stock_id))].slice(0, 25);
     for (const c of codes) { try { RT.quotes[c] = fgQuote(await fugle("intraday/quote/" + c)); } catch (e) { if (e.auth) throw e; } }
+    { const t0 = twNow(); RT.ok = Date.now(); RT.stamp = `${hm(t0)}:${String(t0.getSeconds()).padStart(2, "0")}`; rtApply(); rtStamp(); renderPortfolio(); renderOverview(); applyStamps(); }
     const dtc = S.rep.daytrade.watch || S.rep.daytrade.picks || [];
     const items = [];
     for (const c of dtc.slice(0, 10)) {
