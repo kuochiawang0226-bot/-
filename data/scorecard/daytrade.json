@@ -1738,5 +1738,17 @@
   "scored": false,
   "status": "",
   "note": "🔴 停做"
+ },
+ {
+  "basis": "2026-11-27",
+  "entry_date": "2026-11-26",
+  "type": "當沖",
+  "code": "2317",
+  "name": "鴻海",
+  "market": "上市",
+  "entry": 216.5,
+  "scored": false,
+  "status": "",
+  "note": "🔴 停做"
  }
 ]

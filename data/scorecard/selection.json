@@ -5752,5 +5752,33 @@
   "note": "保守",
   "target": 244.65,
   "stopPrice": 216.69
+ },
+ {
+  "basis": "2026-11-27",
+  "entry_date": "2026-11-26",
+  "type": "中長期",
+  "code": "1301",
+  "name": "台塑",
+  "market": "上市",
+  "entry": 60.2,
+  "scored": false,
+  "status": "👀僅觀察",
+  "note": "保守",
+  "target": 63.21,
+  "stopPrice": 55.986
+ },
+ {
+  "basis": "2026-11-27",
+  "entry_date": "2026-11-26",
+  "type": "綜合評分",
+  "code": "2610",
+  "name": "華航",
+  "market": "上市",
+  "entry": 21.8,
+  "scored": false,
+  "status": "👀 觀察",
+  "note": "保守",
+  "target": 22.89,
+  "stopPrice": 20.274
  }
 ]
