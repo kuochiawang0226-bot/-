@@ -169,6 +169,11 @@ main{padding-block:20px 64px;max-width:1320px;width:100%}
 .pillsum .d{display:inline-flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600}
 .pillsum .d::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dot,var(--faint))}
 .pillsum .more{margin-left:auto;font-size:.76rem;color:var(--accent);display:inline-flex;align-items:center;gap:4px}
+.stamp{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;line-height:1.4;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:500;letter-spacing:0}
+.stamp::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--faint)}
+.stamp.live{color:var(--down);border-color:color-mix(in srgb,var(--down) 35%,var(--line))}
+.stamp.live::before{background:var(--down);animation:blink 1.6s infinite}
+.stampline{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
 .nudge{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .nudge span{flex:1;min-width:200px}
 .nudge .iconbtn.sm{width:30px;height:30px}
@@ -630,12 +635,14 @@ canvas{max-width:100%}
         <button type="button" data-k="value" aria-pressed="false">低估值</button>
       </div>
     </div>
+    <div class="stampline" id="pickStamp"></div>
     <div class="callout" id="pickIntro"></div>
     <div class="chips" id="pickFilter"></div>
     <div class="cards" id="pickCards"></div>
   </section>
 
   <section class="view" id="v-daytrade" hidden>
+    <div class="stampline" id="dtStamp"></div>
     <div class="dthead">
       <div class="card" id="dtPhase"></div>
       <div class="card"><div class="counts" id="dtCounts"></div><p class="note" style="margin:10px 0 0" id="dtNote"></p></div>
@@ -674,6 +681,7 @@ canvas{max-width:100%}
       </div>
       <div class="card" id="pfActionsCard"><header><svg class="i"><use href="#i-shield"/></svg><h2>第一行動：先處理風險</h2></header><ol class="orders" id="pfActions"></ol></div>
       <div class="sec-title"><svg class="i" style="color:var(--accent)"><use href="#i-wallet"/></svg><h2>持股健診</h2><span class="sub" id="pfSub"></span><span class="spacer" style="flex:1"></span><span class="chips" id="pfLegend"><button type="button" class="chip green" data-lf="green" aria-pressed="false"><i class="sq"></i>續抱</button><button type="button" class="chip amber" data-lf="amber" aria-pressed="false"><i class="sq"></i>注意</button><button type="button" class="chip red" data-lf="red" aria-pressed="false"><i class="sq"></i>該處理</button></span></div>
+      <div class="stampline" id="pfStamp"></div>
       <div class="hcards" id="hcards"></div>
       <details class="more card"><summary><svg class="i"><use href="#i-grid"/></svg>表格檢視</summary><div class="tablewrap"><table id="pfTable"></table></div></details>
       <div class="card">
@@ -1137,6 +1145,35 @@ function renderTop() {
   $("#ver2").textContent = r.version;
 }
 
+/* ── 資料時間標記：盤後資料標「幾月幾日收盤」，即時資料標「即時 幾點幾分」 ── */
+const mdOf = iso => iso ? iso.slice(5, 10).replace("-", "/") : "";
+function stampHTML(kind, extra) {
+  const r = S.rep; if (!r) return "";
+  const made = `${mdOf(r.generated_at)} ${r.generated_at.slice(11, 16)}`;
+  const tip = `每日分析於 ${made} 算好；每個交易日 16:40、08:00 更新`;
+  if (kind === "close") return `<span class="stamp" title="${esc(tip)}">盤後資料・${mdOf(r.basis)} 收盤</span>`;
+  if (kind === "made") return `<span class="stamp" title="${esc(tip)}">更新於 ${made}</span>`;
+  if (kind === "text") return `<span class="stamp">${esc(extra)}</span>`;
+  if (kind === "price") {
+    if (RT.ok) return `<span class="stamp live">價格即時 ${esc(RT.stamp || "")}</span>`;
+    const t = S.live?.updated; return t && t.slice(0, 10) > r.basis ? `<span class="stamp">價格：延遲報價 ${mdOf(t)} ${t.slice(11, 16)}</span>` : `<span class="stamp">價格：${mdOf(r.basis)} 收盤</span>`;
+  }
+  return "";
+}
+const STAMP_MAP = {close: ["市場體檢", "今日作戰指令", "類股熱力圖", "三大法人動向", "紅旗排除區", "事件雷達", "查個股", "中長期每月成績", "近 20 筆中長期紀錄"], made: ["國際盤與匯率"]};
+function applyStamps() {
+  if (!S.rep) return;
+  for (const [kind, names] of Object.entries(STAMP_MAP))
+    $$("main h2").forEach(h => {
+      if (!names.includes(h.textContent.trim())) return;
+      const old = h.parentElement.querySelector(":scope>.stamp"); if (old) old.outerHTML = "";
+      h.insertAdjacentHTML("afterend", stampHTML(kind));
+    });
+  const pick = $("#pickStamp"); if (pick) pick.innerHTML = stampHTML("close") + stampHTML("text", "選股與評分每天盤後重算");
+  const dt = $("#dtStamp"); if (dt) dt.innerHTML = stampHTML("text", `候選名單：${mdOf(S.rep.basis)} 收盤選出`) + (RT.ok ? `<span class="stamp live">盤中判斷即時 ${esc(RT.stamp || "")}</span>` : stampHTML("price").replace("價格", "盤中判斷"));
+  const pf = $("#pfStamp"); if (pf) pf.innerHTML = stampHTML("price") + stampHTML("text", `燈號、均線、訊號：${mdOf(S.rep.basis)} 收盤`);
+  const st = $("#studySub"); if (st && S.study) st.innerHTML = `${esc(S.study.period[0].slice(5))} ～ ${esc(S.study.period[1].slice(5))}｜${S.study.trades} 筆推薦 ${stampHTML("text", "回測於 " + mdOf(S.study.generated))}`;
+}
 function renderOverview() {
   const r = S.rep, g = r.market.regime, m = r.market;
   // 有今天的盤中／收盤指數（富果即時或雲端報價）就用今天的，沒有才用每日分析的前一天收盤
@@ -1727,28 +1764,28 @@ function renderSheet(code, d, row, pr) {
         <div class="ktip" id="ktip"></div><div class="kbox"><canvas id="kc" aria-label="${esc(name)} K 線圖"></canvas></div>
         <div class="rets" style="margin-top:12px">${[["5 日", t.ret5], ["20 日", t.ret20], ["60 日", t.ret60], ["120 日", t.ret120]].map(([k, v]) => `<div><span>${k}報酬</span><b class="${cls(v)}">${pct(v, 1)}</b></div>`).join("")}</div>
       </div>` : `<div class="callout">這檔不在每日技術分析範圍（成交金額低於 3 億），只顯示基本資料。</div>`}
-      ${pl ? `<div class="card"><header>${icon("target")}<h2>交易計畫</h2><span class="spacer"></span>${chip(ok ? "環境允許分批" : "目前只觀察", ok ? "green" : "amber")}</header>
+      ${pl ? `<div class="card"><header>${icon("target")}<h2>交易計畫</h2>${stampHTML("close")}<span class="spacer"></span>${chip(ok ? "環境允許分批" : "目前只觀察", ok ? "green" : "amber")}</header>
         <div class="plan"><div><span>進場區</span><b>${fmt(pl.zone[0], 2)}–${fmt(pl.zone[1], 2)}</b></div><div><span>停損（${pl.stop_pct}%）</span><b class="down">${fmt(pl.stop, 2)}</b></div><div><span>目標一（2R）</span><b class="up">${fmt(pl.t1, 2)}</b></div><div><span>目標二（3R）</span><b class="up">${fmt(pl.t2, 2)}</b></div></div>
         <p class="note" style="margin-bottom:0">${esc(pl.how)}。${esc(posHint)}停損取「2 倍 ATR」與「−7%」較近者。</p></div>` : ""}
       ${pr ? `<div class="card"><header>${icon("wallet")}<h2>我的部位</h2><span class="spacer"></span>${chip(pr.light + " " + pr.why, lightKey(pr.light))}</header>
         <div class="kv"><div><span>股數</span><b>${fmt(pr.shares)}</b></div><div><span>成本</span><b>${fmt(pr.cost, 2)}</b></div><div><span>市值</span><b>${fmt(pr.value)}</b></div>
           <div><span>損益</span><b class="${cls(pr.pnl)}">${fmt(pr.pnl)}</b></div><div><span>報酬率</span><b class="${cls(pr.pnl_pct)}">${pct(pr.pnl_pct)}</b></div><div><span>比重</span><b class="${pr.weight > 20 ? "up" : ""}">${pr.weight.toFixed(1)}%</b></div>
           <div><span>停損</span><b>${pr.stop ? fmt(pr.stop, 2) : "未設"}</b></div><div><span>距停損</span><b>${pr.stop && price ? pct((price / pr.stop - 1) * 100, 1) : "—"}</b></div><div><span>目標</span><b>${pr.target ? fmt(pr.target, 2) : "—"}</b></div></div></div>` : ""}
-      ${d ? `<div class="card"><header>${icon("pulse")}<h2>訊號與趨勢檢查</h2></header>
+      ${d ? `<div class="card"><header>${icon("pulse")}<h2>訊號與趨勢檢查</h2>${stampHTML("close")}</header>
         <div class="chips" style="margin-bottom:12px">${d.sig.entry.map(s => chip("🎯 進場：" + s, "green")).join("")}${d.sig.exit.map(s => chip("⚠ 出場：" + s, "red")).join("")}${d.sig.info.map(s => chip(s, "blue")).join("")}${!d.sig.entry.length && !d.sig.exit.length ? chip("目前無明確進出場訊號", "") : ""}${d.sig.trail_stop ? chip("ATR 移動停利 " + fmt(d.sig.trail_stop, 2), "amber") : ""}</div>
         <div class="checks">${d.checks.map(([k, v]) => `<div><span class="ck ${v ? "y" : "n"}">${v ? "✓" : "✗"}</span>${esc(k)}</div>`).join("")}</div>
         <div class="kv" style="margin-top:14px"><div><span>RSI(14)</span><b>${t.rsi ?? "—"}</b></div><div><span>KD</span><b>${t.k ?? "—"} / ${t.d ?? "—"}</b></div><div><span>MACD 柱</span><b class="${cls(t.macd)}">${t.macd ?? "—"}</b></div>
           <div><span>ATR 波動</span><b>${t.atr_pct ?? "—"}%</b></div><div><span>量比(對20日)</span><b>${t.vol_ratio ?? "—"}</b></div><div><span>乖離月線</span><b class="${cls(t.bias20)}">${pct(t.bias20, 1)}</b></div></div></div>` : ""}
-      ${d?.parts ? `<div class="card"><header>${icon("trophy")}<h2>綜合評分</h2><span class="spacer"></span><span class="sub">RS 強度 ${d.rs ?? "—"}（全市場百分位）</span></header>
+      ${d?.parts ? `<div class="card"><header>${icon("trophy")}<h2>綜合評分</h2>${stampHTML("close")}<span class="spacer"></span><span class="sub">RS 強度 ${d.rs ?? "—"}（全市場百分位）</span></header>
         <div style="display:flex;gap:16px;align-items:center">${ring(d.score, 64)}<div style="flex:1;min-width:0">${partBars(d.parts)}</div></div></div>` : ""}
-      <div class="card"><header>${icon("users")}<h2>籌碼</h2><span class="spacer"></span><span class="sub">單位：張</span></header>
+      <div class="card"><header>${icon("users")}<h2>籌碼</h2>${d?.insti?.length ? stampHTML("text", "法人至 " + d.insti[d.insti.length - 1].d.slice(5).replace("-", "/")) : stampHTML("close")}<span class="spacer"></span><span class="sub">單位：張</span></header>
         ${ins.length ? `<div class="tablewrap"><table><thead><tr><th class="l">日期</th><th>外資</th><th>投信</th><th>自營商</th><th>合計</th></tr></thead><tbody>${ins.map(x => `<tr><td class="l num">${esc(x.d.slice(5).replace("-", "/"))}</td><td class="num ${cls(x.foreign)}">${fmt(x.foreign)}</td><td class="num ${cls(x.trust)}">${fmt(x.trust)}</td><td class="num ${cls(x.dealer)}">${fmt(x.dealer)}</td><td class="num ${cls(x.total)}"><b>${fmt(x.total)}</b></td></tr>`).join("")}</tbody></table></div>` : `<p class="note">法人資料暫缺</p>`}
         <div class="kv" style="margin-top:12px"><div><span>當沖比</span><b>${d?.chips?.dt_ratio ?? "—"}%</b></div><div><span>借券賣出比</span><b>${d?.chips?.sbl_ratio ?? "—"}%</b></div><div><span>融資增減(張)</span><b class="${cls(d?.chips?.margin_chg)}">${fmt(d?.chips?.margin_chg)}</b></div></div>
         ${d?.tdcc ? `<h3 class="sub-h">集保股權分散<span class="note" style="font-weight:400">（${esc(d.tdcc.date.slice(4, 6))}/${esc(d.tdcc.date.slice(6))} 週資料${d.tdcc.prev ? "，和上週比" : ""}）</span></h3>
         <div class="kv"><div><span>千張大戶持股</span><b>${fmt(d.tdcc.b, 2)}%</b></div><div><span>大戶週增減</span><b class="${cls(d.tdcc.b_chg)}">${d.tdcc.b_chg != null ? (d.tdcc.b_chg > 0 ? "+" : "") + d.tdcc.b_chg.toFixed(2) + "%" : "下週起"}</b></div><div><span>大戶四週增減</span><b class="${cls(d.tdcc.b_chg4)}">${d.tdcc.b_chg4 != null ? (d.tdcc.b_chg4 > 0 ? "+" : "") + d.tdcc.b_chg4.toFixed(2) + "%" : "累積中"}</b></div>
           <div><span>400 張以上</span><b>${fmt(d.tdcc.b4, 2)}%</b></div><div><span>散戶(≤50張)</span><b>${fmt(d.tdcc.r, 2)}%</b></div><div><span>股東人數</span><b>${fmt(d.tdcc.n)}${d.tdcc.n_chg != null ? ` <small class="${cls(-d.tdcc.n_chg)}">${d.tdcc.n_chg > 0 ? "+" : ""}${d.tdcc.n_chg}%</small>` : ""}</b></div></div>
         <p class="note" style="margin-bottom:0">大戶增加、股東人數減少＝籌碼集中，通常是好事；反過來是籌碼分散。</p>` : ""}</div>
-      <div class="card"><header>${icon("grid")}<h2>基本面與估值</h2>${d?.rev?.ym ? `<span class="sub">營收月份 ${esc(String(d.rev.ym).slice(0, 3))}/${esc(String(d.rev.ym).slice(3))}</span>` : ""}</header>
+      <div class="card"><header>${icon("grid")}<h2>基本面與估值</h2>${stampHTML("close")}${d?.rev?.ym ? `<span class="sub">營收月份 ${esc(String(d.rev.ym).slice(0, 3))}/${esc(String(d.rev.ym).slice(3))}</span>` : ""}</header>
         <div class="kv"><div><span>營收年增</span><b class="${cls(d?.rev?.yoy ?? row?.yoy)}">${pct(d?.rev?.yoy ?? row?.yoy, 1)}</b></div><div><span>營收月增</span><b class="${cls(d?.rev?.mom)}">${pct(d?.rev?.mom, 1)}</b></div><div><span>累計年增</span><b class="${cls(d?.rev?.ytd)}">${pct(d?.rev?.ytd, 1)}</b></div>
           <div><span>本益比</span><b>${fmt(d?.val?.pe ?? row?.pe, 1)}</b></div><div><span>股價淨值比</span><b>${fmt(d?.val?.pb, 2)}</b></div><div><span>殖利率</span><b>${fmt(d?.val?.y ?? row?.y, 2)}%</b></div></div>
         ${d?.fin ? `<h3 class="sub-h">財報<span class="note" style="font-weight:400">（${esc(d.fin.yq.replace("Q", " 年前 ").replace(/$/, " 季累計"))}）</span></h3>
@@ -1925,6 +1962,7 @@ async function renderStudy() {
   $("#studyTake").innerHTML = `<b>結論 1：出場規則維持「${esc(best.name.replace("（現行）", ""))}」。</b>其他規則（停損更緊、停利拉更遠、移動停利）期望值都比較差。` +
     (base ? `不設停利停損一直抱 20 天，期望值 <b class="${cls(base.expectancy)}">${pct(base.expectancy)}</b>，最差——<b>紀律出場是必要的</b>。` : "") +
     (mkt && all ? `<br><b>結論 2：真正影響輸贏的是「大盤」。</b>只在加權指數站上月線時進場，期望值從 <b class="${cls(all.by_rule.A.expectancy)}">${pct(all.by_rule.A.expectancy)}</b> 變成 <b class="${cls(mkt.by_rule.A.expectancy)}">${pct(mkt.by_rule.A.expectancy)}</b>。所以現在加權跌破月線時，選股建議一律改成「只觀察」。` : "");
+  setTimeout(applyStamps, 0);
   $("#studyRules tbody").innerHTML = rules.map(r => `<tr class="${r.id === d.best ? "hl" : ""}"><td class="l">${esc(r.name)}${r.id === d.best ? " " + chip("最佳", "gold") : ""}</td><td class="r num">${r.n}</td><td class="r num">${r.win_rate}%</td><td class="r num">${r.payoff ?? "—"}</td><td class="r num ${cls(r.expectancy)}">${pct(r.expectancy)}</td><td class="r num ${cls(r.total)}">${pct(r.total, 0)}</td></tr>`).join("");
   $("#studyFilters tbody").innerHTML = fl.map(f => { const a = f.by_rule[d.best], h = f.by_rule.H; return `<tr><td class="l">${esc(f.name)}</td><td class="r num">${a.n}</td><td class="r num">${a.win_rate}%</td><td class="r num ${cls(a.expectancy)}">${pct(a.expectancy)}</td><td class="r num ${cls(h.expectancy)}">${pct(h.expectancy)}</td></tr>`; }).join("");
 }
@@ -1954,7 +1992,7 @@ async function pollLive() {
       $("#liveStamp").classList.toggle("on", fresh);
       $("#liveStamp").textContent = fresh ? "延遲報價 " + l.updated.slice(11, 16) : (l.daytrade?.phase?.label || "報價") + " " + l.updated.slice(11, 16);
     }
-    if (!S.live || l.updated !== S.live.updated || S.live.rt) { S.live = l; rtApply(); if (RT.ok) rtStamp(); renderPortfolio(); renderDaytrade(); renderNews(); renderOverview(); }
+    if (!S.live || l.updated !== S.live.updated || S.live.rt) { S.live = l; rtApply(); if (RT.ok) rtStamp(); renderPortfolio(); renderDaytrade(); renderNews(); renderOverview(); applyStamps(); }
   } catch {}
 }
 
@@ -2080,7 +2118,7 @@ async function rtCycle(force = false) {
       counts: Object.fromEntries(["go", "watch", "no"].map(k => [k, items.filter(i => i.status === k).length])), items};
     RT.ok = Date.now(); RT.err = ""; RT.stamp = `${hm(t)}:${String(t.getSeconds()).padStart(2, "0")}`;
     if (ph.key === "after") RT.after = today;
-    rtApply(); rtStamp(); renderPortfolio(); renderDaytrade(); renderOverview();
+    rtApply(); rtStamp(); renderPortfolio(); renderDaytrade(); renderOverview(); applyStamps();
   } catch (e) {
     RT.err = e.message;
     if (e.auth) { toast("富果金鑰無效，已改用排程資料"); }
@@ -2148,7 +2186,7 @@ async function boot() {
   S.needUnlock = true;
   const av = store.get("autoVault");
   if (av) { try { await openVault(av.name, av.pw); } catch { store.del("autoVault"); } }
-  renderOverview(); renderPicks(); renderDaytrade(); renderPortfolio(); renderNews(); renderBacktest(); renderSetup(); renderDict(); route();
+  renderOverview(); renderPicks(); renderDaytrade(); renderPortfolio(); renderNews(); renderBacktest(); renderSetup(); renderDict(); route(); applyStamps();
   linkTerms(document.body); setupCollapsibles(); observeEnhance();
   setInterval(() => { if (S.rep) renderTop(); }, 60000);
   await pollLive(); setInterval(pollLive, 60000);
