@@ -1552,11 +1552,11 @@ function parseText(txt) {
     const now = S.byCode[code]?.p;
     if (shares == null) {                       // 沒寫「股／張」：整數且最大的當股數（券商庫存多半以股為單位）
       const ints = nums.filter(x => Number.isInteger(x) && x >= 1 && (!now || Math.abs(x / now - 1) > 0.3));
-      if (ints.length) { shares = ints[0] < 1000 && ints.some(x => x >= 1000) ? ints.find(x => x >= 1000) : ints[0]; nums.splice(nums.indexOf(shares), 1); }
+      if (ints.length) { shares = ints[0]; nums.splice(nums.indexOf(shares), 1); }
     }
-    if (price == null && nums.length) {         // 成本：最接近目前股價的數字（0.3～3 倍內）
-      const cand = now ? nums.filter(x => x / now > 0.3 && x / now < 3).sort((a, b) => Math.abs(a / now - 1) - Math.abs(b / now - 1)) : nums;
-      price = cand.find(x => !Number.isInteger(x)) ?? cand[0] ?? null;
+    if (price == null && nums.length) {         // 成本：股數後面第一個像股價的數字（目前股價 0.3～3 倍內；券商庫存多半是「股數、成本、現價」）
+      const cand = now ? nums.filter(x => x / now > 0.3 && x / now < 3) : nums;
+      price = cand[0] ?? null;
     }
     out.push({mode, stock_id: code, stock_name: name, shares: shares || 0, buy_price: price, stop_loss: stopM ? parseFloat(stopM[1]) : null, target_price: tgtM ? parseFloat(tgtM[1]) : null});
   }
