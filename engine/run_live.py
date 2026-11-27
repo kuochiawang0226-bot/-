@@ -11,11 +11,8 @@ import json
 import sys
 from pathlib import Path
 
-import os
-
 from . import intraday, sources as src
-from .crypto import encrypt
-from .run_daily import TW, load_holdings
+from .run_daily import TW
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = ROOT / "site" / "data"
@@ -44,15 +41,14 @@ def main():
     rep_p = SITE / "report.json"
     rep = json.loads(rep_p.read_text(encoding="utf-8")) if rep_p.exists() else {}
 
-    # ── 一般報價（持股＋各名單＋成交金額前 30）
+    # ── 非交易時段（週末、盤前盤後）只更新新聞，報價與當沖判斷沿用最後一次
+    old_p = SITE / "live.json"
+    old = json.loads(old_p.read_text(encoding="utf-8")) if old_p.exists() else {}
+    session = now.weekday() < 5 and dt.time(8, 55) <= now.time() <= dt.time(13, 45)
+    news_only = not session and not a.asof and bool(old)
+
+    # ── 一般報價（各名單＋成交金額前 30；持股不放進公開檔，持股報價由各人瀏覽器自己抓）
     codes: dict[str, str] = {}
-    held: set[str] = set()
-    try:
-        for h in load_holdings().get("holdings", []):
-            codes[h["stock_id"]] = "上市"
-            held.add(h["stock_id"])
-    except Exception as e:  # noqa: BLE001
-        print("讀取持股失敗：", e, file=sys.stderr)
     public: set[str] = set()
     for key in ("midterm", "composite", "value"):
         for p in rep.get(key, []):
@@ -70,9 +66,9 @@ def main():
             codes.setdefault(r["c"], mk[r["c"]])
             public.add(r["c"])
         codes = {c: mk.get(c, m) for c, m in codes.items()}
-    q = src.realtime_quotes(sorted(codes.items())) if not a.asof else {}
+    q = src.realtime_quotes(sorted(codes.items())) if not a.asof and not news_only else {}
     idx = {}
-    for sym, name in (("^TWII", "加權指數"),):
+    for sym, name in (() if news_only else (("^TWII", "加權指數"),)):
         try:
             y = src.yahoo_chart(sym, "1d", "5m", cache=False)
             idx[sym] = {"name": name, "price": y["price"], "prev": y["prev_close"],
@@ -83,18 +79,12 @@ def main():
     # ── 當沖即時判斷
     asof = dt.time.fromisoformat(a.asof) if a.asof else None
     watch = dtp.get("watch") or dtp.get("picks") or []
-    mon = intraday.monitor(dtp, now, avg_volumes([w["code"] for w in watch]), asof) if watch else None
-
-    # 只因為持有才抓的報價：有密碼時改放加密檔，公開網站看不出持有哪些股票
-    pw = os.environ.get("STOCK_PASSWORD")
-    private_q = {c: v for c, v in q.items() if c in held and c not in public}
+    mon = intraday.monitor(dtp, now, avg_volumes([w["code"] for w in watch]), asof) if watch and not news_only else None
+    if news_only:
+        q, idx, mon = old.get("quotes") or {}, old.get("index") or {}, old.get("daytrade")
+    q = {c: v for c, v in q.items() if c in public}
     SITE.mkdir(parents=True, exist_ok=True)
-    q = {c: v for c, v in q.items() if c not in private_q}
-    if pw:
-        (SITE / "live_private.enc.json").write_text(json.dumps(encrypt({"quotes": private_q}, pw)), encoding="utf-8")
-    else:  # 本機／預覽模式：明文檔已列入 .gitignore，不會上傳
-        (SITE / "live_private.json").write_text(json.dumps({"quotes": private_q}, ensure_ascii=False), encoding="utf-8")
-    # 新聞每次一起更新（盤中約 5 分鐘一次）
+    # 新聞每次一起更新
     news = []
     if not a.asof and stocks_p.exists():
         try:
@@ -103,8 +93,10 @@ def main():
             news = src.news(name_map=name_map)[:120]
         except Exception as e:  # noqa: BLE001
             print("新聞更新失敗：", e, file=sys.stderr)
+    if not news and old.get("news"):
+        news = old["news"]
     (SITE / "live.json").write_text(json.dumps({"updated": now.isoformat(timespec="minutes"), "quotes": q, "index": idx,
-                                                "daytrade": mon, "news": news}, ensure_ascii=False), encoding="utf-8")
+                                                "daytrade": mon, "news": news, "news_only": news_only}, ensure_ascii=False), encoding="utf-8")
     if mon:
         c = mon["counts"]
         print(f"當沖即時（{mon['updated'][11:16]}）：可進 {c['go']}、觀察 {c['watch']}、不適合 {c['no']}")

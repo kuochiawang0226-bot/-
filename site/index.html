@@ -740,9 +740,9 @@ canvas{max-width:100%}
 
   <section class="view" id="v-news" hidden>
     <div class="card">
-      <header><svg class="i"><use href="#i-news"/></svg><h2>財經新聞</h2><span class="spacer"></span><div class="seg sm" id="newsSeg" role="group" aria-label="新聞分類"></div></header>
+      <header><svg class="i"><use href="#i-news"/></svg><h2>財經新聞</h2><span class="sub" id="newsTime"></span><span class="spacer"></span><div class="seg sm" id="newsSeg" role="group" aria-label="新聞分類"></div></header>
       <div class="news" id="newsList"></div>
-      <p class="note">來源：鉅亨網（B 級）。點標題開新分頁讀全文，點股票標籤看個股。新聞只供參考，不直接當買賣訊號。</p>
+      <p class="note">來源：鉅亨網、Google 新聞、Yahoo 股市、經濟日報、證交所／櫃買重大訊息。新聞由雲端排程整理（新聞網站不讓網頁直接抓），按「立即更新」會拿到最近一次整理的結果。點標題開新分頁讀全文，點股票標籤看個股。新聞只供參考，不直接當買賣訊號。</p>
     </div>
   </section>
 
@@ -1863,6 +1863,8 @@ function renderNews() {
   $("#newsSeg").innerHTML = cats.concat(held.size ? ["我的持股"] : []).map(c => `<button type="button" data-k="${esc(c)}" aria-pressed="${c === newsCat}">${esc(c)}</button>`).join("");
   const list = items.filter(n => newsCat === "全部" || n.cat === newsCat || (newsCat === "我的持股" && n.stocks.some(s => held.has(s.code))));
   const total = list.length; if (!S.newsAll) list.splice(30);
+  const nt = S.live?.news?.length ? S.live.updated : S.rep.generated_at;
+  $("#newsTime").textContent = nt ? `更新於 ${nt.slice(5, 10).replace("-", "/")} ${nt.slice(11, 16)}` : "";
   $("#newsList").innerHTML = list.map(n => `<article><div class="tm"><b>${esc(n.time.slice(11, 16))}</b>${esc(n.time.slice(5, 10).replace("-", "/"))}</div><div><a class="t" href="${esc(n.url)}" target="_blank" rel="noopener">${esc(n.title)}</a>
     ${n.summary ? `<p>${esc(n.summary)}</p>` : ""}<div class="chips">${chip(n.cat, n.cat === "重大訊息" ? "amber" : "")}${n.src ? `<span class="chip">${esc(n.src)}</span>` : ""}${n.stocks.filter(s => /^\d{4}$/.test(s.code)).map(s => `<span class="chip ${held.has(s.code) ? "gold" : "blue"} click" data-code="${esc(s.code)}">${esc(s.code)} ${esc(s.name)}</span>`).join("")}</div></div></article>`).join("") || `<div class="empty">沒有新聞</div>`;
   if (total > 30) $("#newsList").insertAdjacentHTML("beforeend", `<div class="showmore"><button type="button" id="newsMore">${S.newsAll ? "收起" : `顯示其餘 ${total - 30} 則`}</button></div>`);

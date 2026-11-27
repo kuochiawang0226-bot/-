@@ -1,5 +1,5 @@
-# 盤中（台灣 09:00~13:30）每 5 分鐘：更新報價、當沖即時判斷與新聞，只更新網站。
-# 不寫回存放庫（避免大量提交）。GitHub 排程最快 5 分鐘一次，尖峰時可能延遲幾分鐘。
+# 盤中：更新報價、當沖即時判斷與新聞；非交易時段只更新新聞。只更新網站，不寫回存放庫。
+# 建議由 cron-job.org 觸發：盤中每 5 分鐘、其他時間每 15 分鐘。一次約 2 分鐘跑完，不要設每分鐘（會互相排隊）。
 name: live
 
 on:
@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: live
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   quotes:
