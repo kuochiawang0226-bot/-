@@ -170,7 +170,8 @@ def midterm_picks(stocks: dict, regime: dict, breaker_on: bool, top_n: int = 5) 
             "站上MA5與MA20": bool(t.get("ma5") and t.get("ma20") and s["close"] > t["ma5"] and s["close"] > t["ma20"]),
         }
         ok = all(conds.values())
-        if breaker_on or lt == "watch" or below50:
+        # 回測（data/exit_study.json）：加權在月線下時進場的推薦期望值為負，站上月線才轉正 → 月線下只觀察
+        if breaker_on or lt in ("watch", "cautious") or below50:
             status = "👀僅觀察"
         elif ok:
             status = "🟢可分批"
@@ -315,16 +316,22 @@ def composite_scores(stocks: dict) -> None:
             rs -= 5
         ins = s.get("insti_hist") or []
         a_p = prank(acc, s["insti"] / s["volume"]) if s.get("insti") is not None and s.get("volume") else 0.5
-        chips = 12 * a_p
+        chips = 10 * a_p
         chips += 6 * sum(1 for x in ins[-3:] if x and x > 0) / 3
-        chips += 4 if (s.get("trust") or 0) > 0 else 0
+        chips += 3 if (s.get("trust") or 0) > 0 else 0
         mchg = s.get("margin_chg")
-        chips += 3 if mchg is not None and mchg <= 0 else 0
+        chips += 2 if mchg is not None and mchg <= 0 else 0
+        td = s.get("tdcc") or {}
+        bc = td.get("b_chg")                     # 千張大戶持股週增減（百分點）
+        chips += 4 if bc is not None and bc >= 0.3 else (2 if bc is not None and bc > 0 else 0)
         fund = 0
         yoy = s.get("rev_yoy")
-        fund += 8 if yoy is not None and yoy >= 20 else (5 if yoy is not None and yoy > 0 else 0)
-        fund += 4 if (s.get("rev_ytd") or 0) > 0 else 0
-        fund += 3 if s.get("pe") and 0 < s["pe"] <= 25 else 0
+        fund += 6 if yoy is not None and yoy >= 20 else (4 if yoy is not None and yoy > 0 else 0)
+        fund += 2 if (s.get("rev_ytd") or 0) > 0 else 0
+        fund += 2 if s.get("pe") and 0 < s["pe"] <= 25 else 0
+        fi = s.get("fin") or {}
+        fund += 3 if (fi.get("eps") or 0) > 0 else 0
+        fund += 2 if (fi.get("om") or 0) >= 10 else (1 if (fi.get("om") or 0) > 0 else 0)
         risk = 0
         ap = t.get("atr_pct")
         risk += 5 if ap is not None and ap < 0.03 else (3 if ap is not None and ap < 0.05 else 0)
@@ -348,7 +355,7 @@ def composite_picks(stocks: dict, regime: dict, breaker_on: bool, n: int = 8) ->
             continue
         sig = entry_exit_signals(s)
         t = s["tech"]
-        allow = not breaker_on and regime["longterm"]["key"] != "watch"
+        allow = not breaker_on and regime["longterm"]["key"] not in ("watch", "cautious")
         action = ("🟢 可分批" if allow and sig["entry"] else "⏳ 等訊號" if allow else "👀 觀察")
         atr_stop = s["close"] - 2 * t["atr"] if t.get("atr") else s["close"] * 0.93
         out.append({
@@ -402,6 +409,14 @@ def entry_exit_signals(s: dict, stop_loss: float | None = None, cost: float | No
     trail = None
     if t.get("atr") and t.get("hi20"):
         trail = round(max(t["hi20"], c) - 2.5 * t["atr"], 2)
+    td = s.get("tdcc") or {}
+    if td.get("b_chg") is not None and td["b_chg"] >= 0.5:
+        info.append(f"千張大戶本週加碼 {td['b_chg']:+.2f}%")
+    elif td.get("b_chg") is not None and td["b_chg"] <= -0.5:
+        info.append(f"千張大戶本週減碼 {td['b_chg']:+.2f}%")
+    fi = s.get("fin") or {}
+    if fi.get("eps") is not None and fi["eps"] < 0:
+        info.append(f"今年累計虧損（EPS {fi['eps']}）")
     return {"entry": entry, "exit": exit_, "info": info, "trail_stop": trail}
 
 

@@ -72,6 +72,7 @@ def build(s: dict, regime: dict, basis) -> dict:
                 "ytd": _r(s.get("rev_ytd"), 1)},
         "val": {"pe": s.get("pe"), "pb": s.get("pb"), "y": s.get("yield")},
         "chips": {"margin_chg": s.get("margin_chg"), "dt_ratio": s.get("dt_ratio"), "sbl_ratio": s.get("sbl_ratio")},
+        "fin": s.get("fin"), "tdcc": s.get("tdcc"),
         "gates": s.get("gates", []), "sig": sig, "checks": checks, "plan": plan(s, regime),
     }
 

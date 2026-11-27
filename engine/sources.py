@@ -229,6 +229,58 @@ def monthly_revenue() -> dict:
     return out
 
 
+def financials() -> dict:
+    """上市＋上櫃最新一季財報（今年累計）：每股盈餘、毛利率、營益率、淨利率。官方 OpenAPI。"""
+    out: dict[str, dict] = {}
+
+    def base(r, code_key, eps_key, year_key):
+        rev, op, net = num(r.get("營業收入")), num(r.get("營業利益")), num(r.get("稅後淨利"))
+        return {"eps": num(r.get(eps_key)), "yq": f"{str(r.get(year_key, '')).strip()}Q{str(r.get('季別', '')).strip()}",
+                "om": round(op / rev * 100, 1) if rev and op is not None else None,
+                "npm": round(net / rev * 100, 1) if rev and net is not None else None, "gm": None}
+    for url, ck, ek, yk in ((f"{OAPI}/opendata/t187ap14_L", "公司代號", "基本每股盈餘(元)", "年度"),
+                            (f"{TPEX}/mopsfin_t187ap14_O", "SecuritiesCompanyCode", "基本每股盈餘", "Year")):
+        try:
+            for r in get_json(url, cache=False):
+                out[str(r.get(ck, "")).strip()] = base(r, ck, ek, yk)
+        except FetchError:
+            pass
+    try:
+        for r in get_json(f"{OAPI}/opendata/t187ap17_L", cache=False):
+            f = out.setdefault(str(r.get("公司代號", "")).strip(), {"eps": None, "yq": f"{r.get('年度')}Q{r.get('季別')}"})
+            f["gm"] = num(r.get("毛利率(%)(營業毛利)/(營業收入)"))
+            f["om"] = num(r.get("營業利益率(%)(營業利益)/(營業收入)")) if f.get("om") is None else f["om"]
+            f["npm"] = num(r.get("稅後純益率(%)(稅後純益)/(營業收入)")) if f.get("npm") is None else f["npm"]
+    except FetchError:
+        pass
+    return out
+
+
+def tdcc_holders() -> tuple[str, dict]:
+    """集保戶股權分散表（每週五資料）。b＝千張以上大戶持股比例，b4＝400 張以上，r＝50 張以下散戶，n＝總股東人數。"""
+    import csv
+    import io
+    text = get("https://opendata.tdcc.com.tw/getOD.ashx?id=1-5", cache=False, timeout=120)
+    rows = list(csv.reader(io.StringIO(text.lstrip("\ufeff"))))
+    out: dict[str, dict] = {}
+    date = ""
+    for r in rows[1:]:
+        if len(r) < 6:
+            continue
+        date, code, lv = r[0].strip(), r[1].strip(), int(r[2])
+        o = out.setdefault(code, {"b": 0.0, "b4": 0.0, "r": 0.0, "n": 0})
+        pctv = num(r[5]) or 0.0
+        if lv == 15:
+            o["b"] = pctv
+        if 12 <= lv <= 15:
+            o["b4"] = round(o["b4"] + pctv, 2)
+        if 1 <= lv <= 8:
+            o["r"] = round(o["r"] + pctv, 2)
+        if lv == 17:
+            o["n"] = int(num(r[3]) or 0)
+    return date, {k: v for k, v in out.items() if v["n"]}
+
+
 # ───────────────────────── 櫃買 TPEx（上櫃、興櫃）─────────────────────────
 def tpex_quotes() -> dict:
     """上櫃最新收盤行情（官方 OpenAPI，只提供最新一日）。"""

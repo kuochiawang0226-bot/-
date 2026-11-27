@@ -33,6 +33,40 @@ def log(*a):
     print(*a, file=sys.stderr, flush=True)
 
 
+def load_tdcc() -> dict:
+    """集保千張大戶：抓本週資料，存一份精簡快照到 data/tdcc/，和上週、四週前比較。"""
+    snap_dir = ROOT / "data" / "tdcc"
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    got = try_("集保股權分散（千張大戶）", src.tdcc_holders, fallback=None)
+    if got:
+        date, cur = got
+        f = snap_dir / f"{date}.json"
+        if not f.exists():
+            f.write_text(json.dumps({c: [v["b"], v["b4"], v["r"], v["n"]] for c, v in cur.items()
+                                     if len(c) in (4, 5, 6)}, separators=(",", ":")), encoding="utf-8")
+    files = sorted(snap_dir.glob("*.json"))
+    for old in files[:-10]:
+        old.unlink()
+    files = files[-10:]
+    if not files:
+        return {}
+    load = lambda p: json.loads(p.read_text(encoding="utf-8"))
+    cur, date = load(files[-1]), files[-1].stem
+    prev = load(files[-2]) if len(files) >= 2 else {}
+    m4 = load(files[-5]) if len(files) >= 5 else {}
+    out = {}
+    for c, (b, b4, r, n) in cur.items():
+        o = {"date": date, "b": b, "b4": b4, "r": r, "n": n}
+        if c in prev:
+            pb, _, pr, pn = prev[c]
+            o.update(b_chg=round(b - pb, 2), r_chg=round(r - pr, 2), n_chg=round((n / pn - 1) * 100, 2) if pn else None,
+                     prev=files[-2].stem)
+        if c in m4:
+            o["b_chg4"] = round(b - m4[c][0], 2)
+        out[c] = o
+    return out
+
+
 def try_(name, fn, grade="🔵A", fallback=None):
     try:
         v = fn()
@@ -119,6 +153,8 @@ def build(now: dt.datetime) -> dict:
     disp = try_("處置股（上市）", src.twse_disposal, fallback={}) or {}
     comp = try_("上市產業別", src.twse_companies, fallback={}) or {}
     rev = try_("月營收", src.monthly_revenue, fallback={}) or {}
+    fin = try_("季財報 EPS／毛利率", src.financials, fallback={}) or {}
+    tdcc = load_tdcc()
 
     # ── 3. 上櫃／興櫃
     tq = try_("上櫃行情", src.tpex_quotes, fallback={}) or {}
@@ -194,6 +230,12 @@ def build(now: dt.datetime) -> dict:
     name_map = {s["name"].replace("*", "").replace("-KY", ""): c for c, s in stocks.items()
                 if len(s["name"]) >= 2 and s["market"] != "興櫃" and not s.get("etf")}
     news = try_("財經新聞", lambda: src.news(name_map=name_map), grade="🟡B", fallback=[]) or []
+
+    for code, s in stocks.items():
+        if fin.get(code):
+            s["fin"] = fin[code]
+        if tdcc.get(code):
+            s["tdcc"] = tdcc[code]
 
     gate_stats = stg.apply_gates({c: s for c, s in stocks.items() if not s.get("etf") and s["market"] != "興櫃"}, disposal)
     stg.apply_gates({c: s for c, s in stocks.items() if s.get("etf")}, disposal)   # ETF 也標門檻，但不算進統計
@@ -334,7 +376,9 @@ def build(now: dt.datetime) -> dict:
                       "ins": round((s.get("insti") or 0) / 1000), "sc": s.get("score"), "rs": s.get("rs"),
                       "pe": s.get("pe"), "y": s.get("yield"), "yoy": round(s["rev_yoy"], 1) if s.get("rev_yoy") is not None else None,
                       "g": s.get("gates", []), "ma20": round(t["ma20"], 2) if t.get("ma20") else None,
-                      "rsi": round(t["rsi"]) if t.get("rsi") else None})
+                      "rsi": round(t["rsi"]) if t.get("rsi") else None,
+                      "eps": (s.get("fin") or {}).get("eps"), "gm": (s.get("fin") or {}).get("gm"),
+                      "bh": (s.get("tdcc") or {}).get("b"), "bc": (s.get("tdcc") or {}).get("b_chg")})
     table.sort(key=lambda r: -(r["amt"] or 0))
 
     rep = {
