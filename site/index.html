@@ -1851,7 +1851,8 @@ function drawK(hover = null) {
   if (minute && S.kMinPrev) { hi = Math.max(hi, S.kMinPrev); lo = Math.min(lo, S.kMinPrev); }
   const pad = (hi - lo) * 0.06 || 1; hi += pad; lo -= pad;
   const y = v => padT + (hi - v) / (hi - lo) * pH, cw = plotW / N, x = i => 4 + i * cw + cw / 2;
-  const vmax = Math.max(...bars.map(b => b[5])) || 1, vy0 = padT + pH + gap + volH;
+  // 分鐘線：收盤集合競價那根量特別大，用第 97 百分位當刻度，免得其他量柱被壓扁
+  const vs = bars.map(b => b[5]).sort((a, b) => a - b), vmax = (minute ? vs[Math.floor(vs.length * 0.97)] : vs[vs.length - 1]) || 1, vy0 = padT + pH + gap + volH;
   const C = {up: css("--up"), down: css("--down"), grid: css("--line"), text: css("--faint"), a: css("--accent"), i: css("--info"), v: css("--violet")};
   g.font = "10px " + (css("--f-num") || "sans-serif"); g.strokeStyle = C.grid; g.lineWidth = 1;
   for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4, yy = Math.round(y(v)) + .5; g.beginPath(); g.moveTo(4, yy); g.lineTo(4 + plotW, yy); g.stroke(); g.fillStyle = C.text; g.fillText(v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(v < 100 ? 2 : 1), plotW + 10, yy + 3); }
@@ -1863,7 +1864,7 @@ function drawK(hover = null) {
     g.strokeStyle = col; g.fillStyle = col;
     g.beginPath(); g.moveTo(Math.round(xx) + .5, y(h)); g.lineTo(Math.round(xx) + .5, y(l)); g.stroke();
     g.fillRect(xx - bw / 2, y(Math.max(o, c)), bw, Math.max(1, Math.abs(y(o) - y(c))));
-    g.globalAlpha = .4; const vh = v / vmax * volH; g.fillRect(xx - bw / 2, vy0 - vh, bw, vh); g.globalAlpha = 1;
+    g.globalAlpha = .4; const vh = Math.min(volH, v / vmax * volH); g.fillRect(xx - bw / 2, vy0 - vh, bw, vh); g.globalAlpha = 1;
   });
   (minute ? [["vw", C.a]] : [[5, C.a], [20, C.i], [60, C.v]]).forEach(([k, col]) => { g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath(); let st = false; mas[k].forEach((v, i) => { if (v == null) return; st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; }); g.stroke(); });
   const pl = S.kd.plan;
