@@ -1671,8 +1671,25 @@ async function openStock(code) {
   $("#sheetIn").innerHTML = `<div class="sh-head"><div class="row1"><div><div class="code">${esc(code)}</div><h2>${esc(row?.n || pr?.name || "")}</h2></div><button class="sh-close" type="button" data-close style="margin-left:auto" aria-label="關閉">${icon("x")}</button></div></div><div class="sh-body"><div class="skel"></div><div class="skel" style="height:120px"></div></div>`;
   if (!sheet.open) sheet.showModal();
   $("#sheetIn").scrollTop = 0; $("#toTopSheet").hidden = true;
+  S.sheetCode = code;
   renderSheet(code, await loadDetail(code), row, pr);
+  sheetLive(code);
 }
+function sheetPx(price, chg, q) {
+  const tag = q?.src === "富果即時" ? `・即時 ${esc(q.time || "")}` : q ? `・延遲報價 ${esc(q.time || "")}` : `・${esc(S.rep.basis.slice(5).replace("-", "/"))} 收盤`;
+  return `<div class="p">${fmt(price, pxd(price))}</div><div class="num ${cls(chg)}" style="font-weight:600;white-space:nowrap">${arrow(chg)} ${pct(chg)}<small class="muted" style="font-weight:400">${tag}</small></div>`;
+}
+/* 個股頁打開時：有富果金鑰就抓這檔的即時價，盤中開著每 30 秒跟著更新 */
+async function sheetLive(code) {
+  if (!rtKey() || ["pre", "closed"].includes(rtPhase().key)) return;
+  try {
+    const q = fgQuote(await fugle("intraday/quote/" + code));
+    if (!q.price) return;
+    RT.quotes[code] = q; if (S.live) S.live.quotes = {...(S.live.quotes || {}), [code]: q};
+    if ($("#sheet").open && S.sheetCode === code && $("#shPx")) $("#shPx").innerHTML = sheetPx(q.price, q.prev ? (q.price / q.prev - 1) * 100 : null, q);
+  } catch {}
+}
+setInterval(() => { if ($("#sheet").open && S.sheetCode && !document.hidden && ["opening", "trading", "late"].includes(rtPhase().key)) sheetLive(S.sheetCode); }, 30000);
 function renderSheet(code, d, row, pr) {
   const rep = S.rep, q = S.live?.quotes?.[code];
   const cp = rep.composite.find(p => p.code === code), mt = rep.midterm.find(p => p.code === code), vp = rep.value.find(p => p.code === code), dp = rep.daytrade.picks.find(p => p.code === code);
@@ -1693,7 +1710,7 @@ function renderSheet(code, d, row, pr) {
   $("#sheetIn").innerHTML = `
     <div class="sh-head">
       <div class="row1"><div style="min-width:0"><div class="code">${esc(code)}・${esc(mkt)}・${esc(d?.i || row?.i || "")}</div><h2>${esc(name)}</h2></div>
-        <div class="px"><div class="p">${fmt(price, pxd(price))}</div><div class="num ${cls(chg)}" style="font-weight:600;white-space:nowrap">${arrow(chg)} ${pct(chg)}${q ? "・即時 " + esc(q.time || "") : ""}</div></div>
+        <div class="px" id="shPx">${sheetPx(price, chg, q)}</div>
         <button class="sh-close" type="button" data-close aria-label="關閉">${icon("x")}</button></div>
       ${tags ? `<div class="chips">${tags}</div>` : ""}
     </div>
