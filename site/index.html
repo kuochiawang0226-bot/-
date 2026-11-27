@@ -1759,8 +1759,9 @@ function renderSheet(code, d, row, pr) {
     <div class="sh-body">
       ${(() => { const di = S.live?.daytrade?.items?.find(x => x.code === code && x.status !== "nodata"); return di ? `<div class="sec-title" style="margin:0"><svg class="i" style="color:var(--accent)"><use href="#i-bolt"/></svg><h2>當沖即時判斷</h2><span class="sub">更新 ${esc((S.live.daytrade.updated || "").slice(11, 16))}</span></div>${dtCard(di, true)}` : ""; })()}
       ${d ? `<div class="card">
-        <header><h2>K 線</h2><span class="legend"><span><i style="background:var(--accent)"></i>5MA</span><span><i style="background:var(--info)"></i>月線</span><span><i style="background:var(--violet)"></i>季線</span></span><span class="spacer"></span>
-          <div class="seg sm" id="kSeg" role="group" aria-label="K線區間"><button type="button" data-k="22" aria-pressed="false">1 月</button><button type="button" data-k="66" aria-pressed="true">3 月</button><button type="button" data-k="130" aria-pressed="false">6 月</button></div></header>
+        <header><h2>K 線</h2><span class="legend" id="kLegend"></span><span class="spacer"></span>
+          <div class="seg sm" id="kSeg" role="group" aria-label="K線區間"><button type="button" data-k="m1" aria-pressed="${S.kMode === "m1"}">1 分</button><button type="button" data-k="m5" aria-pressed="${S.kMode === "m5"}">5 分</button><button type="button" data-k="22" aria-pressed="${S.kMode === "d" && S.kN === 22}">1 月</button><button type="button" data-k="66" aria-pressed="${S.kMode === "d" && S.kN === 66}">3 月</button><button type="button" data-k="130" aria-pressed="${S.kMode === "d" && S.kN === 130}">6 月</button></div></header>
+        <p class="note" id="kMsg" hidden style="margin:4px 0 0"></p>
         <div class="ktip" id="ktip"></div><div class="kbox"><canvas id="kc" aria-label="${esc(name)} K 線圖"></canvas></div>
         <div class="rets" style="margin-top:12px">${[["5 日", t.ret5], ["20 日", t.ret20], ["60 日", t.ret60], ["120 日", t.ret120]].map(([k, v]) => `<div><span>${k}報酬</span><b class="${cls(v)}">${pct(v, 1)}</b></div>`).join("")}</div>
       </div>` : `<div class="callout">這檔不在每日技術分析範圍（成交金額低於 3 億），只顯示基本資料。</div>`}
@@ -1795,8 +1796,11 @@ function renderSheet(code, d, row, pr) {
       <div class="actions"><a class="btn" href="https://tw.stock.yahoo.com/quote/${encodeURIComponent(code)}" target="_blank" rel="noopener">Yahoo 股市</a><a class="btn" href="https://www.cnyes.com/twstock/${encodeURIComponent(code)}" target="_blank" rel="noopener">鉅亨個股</a><a class="btn" href="https://goodinfo.tw/tw/StockDetail.asp?STOCK_ID=${encodeURIComponent(code)}" target="_blank" rel="noopener">Goodinfo</a>${pr ? `<button class="btn" type="button" data-sedit="${esc(code)}">編輯持股</button>` : `<button class="btn" type="button" data-addhold="${esc(code)}">加入持股</button>`}</div>
       <p class="note">技術面參考，非投資建議。資料基準 ${esc(rep.basis)} 收盤。</p>
     </div>`;
-  S.kd = d; S.kN = 66;
-  if (d) { seg($("#kSeg"), k => { S.kN = +k; drawK(); }); requestAnimationFrame(() => drawK()); }
+  S.kd = d; S.kN = S.kN || 66; S.kMode = S.kMode || "d"; S.kMin = null;
+  if (d) {
+    seg($("#kSeg"), k => { if (k[0] === "m") { S.kMode = k; loadMinute(code); } else { S.kMode = "d"; S.kN = +k; drawK(); } });
+    if (S.kMode !== "d") loadMinute(code); else requestAnimationFrame(() => drawK());
+  }
 }
 $("#sheet").addEventListener("click", e => {
   if (e.target.closest("#toTopSheet")) return;
@@ -1808,16 +1812,43 @@ $("#sheet").addEventListener("click", e => {
 addEventListener("resize", () => { if ($("#sheet").open && S.kd) drawK(); });
 
 /* K 線圖：紅漲綠跌、5/20/60 均線、成交量、停損與目標線、十字游標 */
+/* 分鐘 K：富果 intraday/candles（1 分或 5 分），附 VWAP 與昨收；盤中開著每 30 秒更新 */
+async function loadMinute(code, quiet) {
+  const msg = $("#kMsg"); if (!msg) return;
+  if (!rtKey()) {
+    S.kMin = null; msg.hidden = false;
+    msg.innerHTML = `分鐘線需要即時報價（富果金鑰，免費）。<a href="#setup" data-close>到設定開啟</a>`;
+    drawK(); return;
+  }
+  if (!quiet) { msg.hidden = false; msg.textContent = "載入分鐘線…"; }
+  try {
+    const tf = S.kMode === "m5" ? 5 : 1, j = await fugle(`intraday/candles/${code}?timeframe=${tf}`), u = fgUnit(j);
+    if (S.sheetCode !== code || S.kMode === "d") return;
+    const off = (new Date().getTimezoneOffset() + 480) * 60000;
+    S.kMin = (j.data || []).map(b => [hm(new Date(Date.parse(b.date) + off)), +b.open, +b.high, +b.low, +b.close, (+b.volume || 0) * u, +b.average || null]).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    S.kMinDate = j.date; S.kMinPrev = (S.live?.quotes?.[code] || RT.quotes[code])?.prev || S.kd?.p || null;
+    if (!S.kMin.length) { msg.hidden = false; msg.textContent = "今天還沒有成交，開盤後就會出現分鐘線。"; }
+    else { msg.hidden = false; msg.innerHTML = `${esc(mdOf(j.date))} ${tf} 分 K・<span class="stamp live">即時 ${esc(S.kMin[S.kMin.length - 1][0])}</span>`; }
+  } catch (e) { if (!quiet) { msg.hidden = false; msg.textContent = "分鐘線暫時抓不到：" + e.message; } }
+  drawK();
+}
+setInterval(() => { if ($("#sheet").open && S.sheetCode && S.kMode && S.kMode !== "d" && !document.hidden && ["opening", "trading", "late"].includes(rtPhase().key)) loadMinute(S.sheetCode, true); }, 30000);
 function drawK(hover = null) {
   const cv = $("#kc"); if (!cv || !S.kd) return;
-  const all = S.kd.bars, N = Math.min(S.kN, all.length), bars = all.slice(-N);
-  const closes = all.map(b => b[4]), mas = {5: maSeries(closes, 5).slice(-N), 20: maSeries(closes, 20).slice(-N), 60: maSeries(closes, 60).slice(-N)};
+  const minute = S.kMode && S.kMode !== "d";
+  if (minute && !S.kMin?.length) { const g0 = cv.getContext("2d"); g0.clearRect(0, 0, cv.width, cv.height); $("#ktip").innerHTML = ""; $("#kLegend").innerHTML = ""; return; }
+  const all = minute ? S.kMin : S.kd.bars, N = minute ? all.length : Math.min(S.kN, all.length), bars = all.slice(-N);
+  const closes = all.map(b => b[4]);
+  const mas = minute ? {vw: all.map(b => b[6])} : {5: maSeries(closes, 5).slice(-N), 20: maSeries(closes, 20).slice(-N), 60: maSeries(closes, 60).slice(-N)};
+  $("#kLegend").innerHTML = minute ? `<span><i style="background:var(--accent)"></i>VWAP 均價</span><span><i style="background:var(--faint)"></i>昨收</span>` : `<span><i style="background:var(--accent)"></i>5MA</span><span><i style="background:var(--info)"></i>月線</span><span><i style="background:var(--violet)"></i>季線</span>`;
   const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
   if (!W || !H) return;
   cv.width = W * dpr; cv.height = H * dpr;
   const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   const padR = 58, padT = 16, volH = H * 0.18, gap = 12, pH = H - volH - gap - padT - 20, plotW = W - padR - 4;
-  let hi = -Infinity, lo = Infinity; bars.forEach((b, i) => { hi = Math.max(hi, b[2]); lo = Math.min(lo, b[3]); [5, 20, 60].forEach(k => { const v = mas[k][i]; if (v != null) { hi = Math.max(hi, v); lo = Math.min(lo, v); } }); });
+  const keys = Object.keys(mas);
+  let hi = -Infinity, lo = Infinity; bars.forEach((b, i) => { hi = Math.max(hi, b[2]); lo = Math.min(lo, b[3]); keys.forEach(k => { const v = mas[k][i]; if (v != null) { hi = Math.max(hi, v); lo = Math.min(lo, v); } }); });
+  if (minute && S.kMinPrev) { hi = Math.max(hi, S.kMinPrev); lo = Math.min(lo, S.kMinPrev); }
   const pad = (hi - lo) * 0.06 || 1; hi += pad; lo -= pad;
   const y = v => padT + (hi - v) / (hi - lo) * pH, cw = plotW / N, x = i => 4 + i * cw + cw / 2;
   const vmax = Math.max(...bars.map(b => b[5])) || 1, vy0 = padT + pH + gap + volH;
@@ -1825,7 +1856,7 @@ function drawK(hover = null) {
   g.font = "10px " + (css("--f-num") || "sans-serif"); g.strokeStyle = C.grid; g.lineWidth = 1;
   for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4, yy = Math.round(y(v)) + .5; g.beginPath(); g.moveTo(4, yy); g.lineTo(4 + plotW, yy); g.stroke(); g.fillStyle = C.text; g.fillText(v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(v < 100 ? 2 : 1), plotW + 10, yy + 3); }
   const step = Math.max(1, Math.round(N / 5));
-  g.fillStyle = C.text; bars.forEach((b, i) => { if (i % step === 0) g.fillText(b[0].slice(5).replace("-", "/"), Math.max(4, x(i) - 12), H - 4); });
+  g.fillStyle = C.text; bars.forEach((b, i) => { if (i % step === 0) g.fillText(minute ? b[0] : b[0].slice(5).replace("-", "/"), Math.max(4, x(i) - 12), H - 4); });
   const bw = Math.max(1, Math.min(10, cw * 0.66));
   bars.forEach((b, i) => {
     const [, o, h, l, c, v] = b, col = c >= o ? C.up : C.down, xx = x(i);
@@ -1834,12 +1865,13 @@ function drawK(hover = null) {
     g.fillRect(xx - bw / 2, y(Math.max(o, c)), bw, Math.max(1, Math.abs(y(o) - y(c))));
     g.globalAlpha = .4; const vh = v / vmax * volH; g.fillRect(xx - bw / 2, vy0 - vh, bw, vh); g.globalAlpha = 1;
   });
-  [[5, C.a], [20, C.i], [60, C.v]].forEach(([k, col]) => { g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath(); let st = false; mas[k].forEach((v, i) => { if (v == null) return; st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; }); g.stroke(); });
+  (minute ? [["vw", C.a]] : [[5, C.a], [20, C.i], [60, C.v]]).forEach(([k, col]) => { g.strokeStyle = col; g.lineWidth = 1.4; g.beginPath(); let st = false; mas[k].forEach((v, i) => { if (v == null) return; st ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v)); st = true; }); g.stroke(); });
   const pl = S.kd.plan;
-  if (pl) [[pl.stop, C.down, "停損 " + pl.stop], [pl.t1, C.up, "目標 " + pl.t1]].forEach(([v, col, lab]) => { if (v < lo || v > hi) return; g.setLineDash([4, 4]); g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(4, y(v)); g.lineTo(4 + plotW, y(v)); g.stroke(); g.setLineDash([]); g.fillStyle = col; g.fillText(lab, 8, y(v) - 4); });
+  const refs = minute ? (S.kMinPrev ? [[S.kMinPrev, C.text, "昨收 " + S.kMinPrev]] : []) : pl ? [[pl.stop, C.down, "停損 " + pl.stop], [pl.t1, C.up, "目標 " + pl.t1]] : [];
+  refs.forEach(([v, col, lab]) => { if (v < lo || v > hi) return; g.setLineDash([4, 4]); g.strokeStyle = col; g.lineWidth = 1; g.beginPath(); g.moveTo(4, y(v)); g.lineTo(4 + plotW, y(v)); g.stroke(); g.setLineDash([]); g.fillStyle = col; g.fillText(lab, 4 + plotW - g.measureText(lab).width - 4, y(v) - 4); });
   const i = hover ?? N - 1, b = bars[i];
   if (hover != null) { g.strokeStyle = C.text; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(x(i), padT); g.lineTo(x(i), vy0); g.stroke(); g.setLineDash([]); }
-  const prevC = i > 0 ? bars[i - 1][4] : (all.length > N ? all[all.length - N - 1][4] : b[1]);
+  const prevC = minute ? (S.kMinPrev || bars[0][1]) : i > 0 ? bars[i - 1][4] : (all.length > N ? all[all.length - N - 1][4] : b[1]);
   const ch = (b[4] / prevC - 1) * 100;
   $("#ktip").innerHTML = `<span>${esc(b[0])}</span><span>開 <b>${fmt(b[1], 2)}</b></span><span>高 <b>${fmt(b[2], 2)}</b></span><span>低 <b>${fmt(b[3], 2)}</b></span><span>收 <b class="${cls(ch)}">${fmt(b[4], 2)}</b> <span class="${cls(ch)}">${pct(ch)}</span></span><span>量 <b>${fmt(b[5] / 1000)}</b> 張</span>`;
   cv.onpointermove = e => { const r = cv.getBoundingClientRect(); drawK(Math.max(0, Math.min(N - 1, Math.floor((e.clientX - r.left - 4) / cw)))); };
